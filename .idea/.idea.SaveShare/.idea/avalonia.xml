@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AvaloniaProject">
+    <option name="projectPerEditor">
+      <map>
+        <entry key="Client/App.axaml" value="Client/Client.csproj" />
+        <entry key="Client/Dialogs/AddCloudSaveDialog.axaml" value="Client/Client.csproj" />
+        <entry key="Client/Dialogs/AddLocalSaveDialog.axaml" value="Client/Client.csproj" />
+        <entry key="Client/Dialogs/CreateNewUserDialog.axaml" value="Client/Client.csproj" />
+        <entry key="Client/Dialogs/ModalDialog.axaml" value="Client/Client.csproj" />
+        <entry key="Client/MainWindow.axaml" value="Client/Client.csproj" />
+        <entry key="Client/Views/MainWindow.axaml" value="Client/Client.csproj" />
+        <entry key="GUI/MainWindow.axaml" value="GUI/GUI.csproj" />
+      </map>
+    </option>
+  </component>
+</project>

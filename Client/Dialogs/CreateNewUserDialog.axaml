@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="176"
+        x:Class="Client.Dialogs.CreateNewUserDialog"
+        MinWidth="350" MinHeight="176"
+        Width="350" Height="176"
+        Title="Create user">
+    <Grid RowDefinitions="Auto,*,Auto,Auto" Background="#303030">
+        <Border Grid.Row="0" Margin="8" CornerRadius="8" Background="#202020" ClipToBounds="True">
+            <Grid ColumnDefinitions="Auto,*" Background="#202020">
+                <TextBlock Grid.Column="0" Margin="8 8 4 8" VerticalAlignment="Center">Username: </TextBlock>
+                <TextBox Grid.Column="1" Margin="4 8 8 8" Name="UserNameTextBox" PlaceholderText="Select username..."/>
+            </Grid>
+        </Border>
+        
+        <Border Grid.Row="2" Margin="8" CornerRadius="8" Background="#202020" ClipToBounds="True">
+            <Grid ColumnDefinitions="*" Background="#202020">
+                <TextBlock Margin="8" Foreground="Red" Name="ErrorTextBlock" IsVisible="False"/>
+            </Grid>
+        </Border>
+        
+        <Border Grid.Row="3" Margin="8" CornerRadius="8" Background="#202020" ClipToBounds="True">
+            <Grid ColumnDefinitions="Auto,*,Auto" Background="#202020">
+                <Button Grid.Column="0" Margin="8" Content="Quit" Name="CancelButton" Click="CancelButton_OnClick"></Button>
+                <Button Grid.Column="2" Margin="8" Content="Sign In" Name="OkButton" Click="OkButton_OnClick"></Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

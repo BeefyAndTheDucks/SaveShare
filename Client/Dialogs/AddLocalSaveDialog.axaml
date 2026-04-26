@@ -1,0 +1,35 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:dialogs="clr-namespace:Client.Dialogs"
+        mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="240"
+        x:Class="Client.Dialogs.AddLocalSaveDialog"
+        x:DataType="dialogs:AddLocalSaveDialog"
+        MinWidth="350" MinHeight="240"
+        Width="350" Height="240"
+        Title="Add Local Save">
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Background="#303030">
+        <Border Grid.Row="0" Margin="8" CornerRadius="8" Background="#202020" ClipToBounds="True">
+            <Grid ColumnDefinitions="*,Auto" Background="#202020">
+                <TextBox Grid.Column="0" Margin="8 8 2 8" Name="PathTextBox" PlaceholderText="Path to save file..."></TextBox>
+                <Button Grid.Column="1" Margin="2 8 8 8" Content="Browse" Name="BrowseButton" Click="BrowseButton_OnClick"></Button>
+            </Grid>
+        </Border>
+        
+        <Border Grid.Row="1" Margin="8" ClipToBounds="True" CornerRadius="8" Background="#202020">
+            <TextBox Margin="8" Name="SaveNameTextBox" PlaceholderText="Save name..."/>
+        </Border>
+        
+        <Border Grid.Row="3" Margin="8" ClipToBounds="True" CornerRadius="8" Background="#202020">
+            <TextBlock Padding="8" Foreground="Red" Background="#202020" Name="ErrorTextBlock" IsVisible="False"/>
+        </Border>
+        
+        <Border Grid.Row="4" Margin="8" ClipToBounds="True" CornerRadius="8" Background="#202020">
+            <Grid ColumnDefinitions="Auto,*,Auto" Background="#202020">
+                <Button Grid.Column="0" Margin="8" Content="Cancel" Name="CancelButton" Click="CancelButton_OnClick"></Button>
+                <Button Grid.Column="2" Margin="8" Content="Ok" Name="OkButton" Click="OkButton_OnClick"></Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -1,0 +1,47 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Client.ViewModels"
+        xmlns:dialogs="clr-namespace:Client.Dialogs"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="300"
+        x:Class="Client.Dialogs.AddCloudSaveDialog"
+        x:DataType="dialogs:AddCloudSaveDialog"
+        Title="Add Cloud Save"
+        MinWidth="600" MinHeight="300"
+        Width="600" Height="400">
+    <Grid RowDefinitions="Auto,*,Auto,Auto" Background="#303030">
+        <Border Background="#202020" CornerRadius="8" Margin="8" ClipToBounds="True">
+            <Grid RowDefinitions="Auto,Auto" Background="#202020">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Grid.Column="0" Margin="8 8 2 8" Name="PathTextBox" PlaceholderText="Download location..." TextChanged="PathTextBox_OnTextChanged"></TextBox>
+                    <Button Grid.Column="1" Margin="2 8 8 8" Content="Browse" Name="BrowseButton" Click="BrowseButton_OnClick"></Button>
+                </Grid>
+                <TextBlock Grid.Row="1" Margin="8 -4 8 8" Foreground="#B0B0B0" Name="DownloadTargetInfo" IsVisible="False"></TextBlock>
+            </Grid>
+        </Border>
+        <Border Grid.Row="1" Background="#202020" CornerRadius="8" Margin="8" Padding="-4 0" ClipToBounds="True">
+            <ListBox ItemsSource="{Binding CloudSaves}"
+                     SelectionChanged="SelectingItemsControl_OnSelectionChanged"
+                     Name="CloudSavesList"
+                     Background="#202020">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:CloudSaveInfoViewModel">
+                        <TextBlock Text="{Binding Name}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+        
+        <Border Grid.Row="2" Background="#202020" CornerRadius="8" Margin="8" ClipToBounds="True" IsVisible="False" Name="ErrorTextParent">
+            <TextBlock Padding="8" Foreground="Red" Background="#202020" Name="ErrorTextBlock"/>
+        </Border>
+        
+        <Border Grid.Row="3" Margin="8" ClipToBounds="True" Background="#202020" CornerRadius="8">
+            <Grid ColumnDefinitions="Auto,*,Auto" Background="#202020">
+                <Button Grid.Column="0" Margin="8" Content="Cancel" Name="CancelButton" Click="CancelButton_OnClick"></Button>
+                <Button Grid.Column="2" Margin="8" Content="Ok" Name="OkButton" Click="OkButton_OnClick"></Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

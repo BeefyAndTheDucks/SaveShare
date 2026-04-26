@@ -1,0 +1,142 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Client.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="Client.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Save Share Client (GUI)">
+
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+    
+    <Window.Styles>
+        <Style Selector="TextBlock.ServerStatus">
+            <Setter Property="Foreground" Value="Red"/>
+        </Style>
+
+        <Style Selector="TextBlock.ServerStatus[Tag=True]">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="240,*">
+        <Grid Grid.Column="0"
+              RowDefinitions="Auto,*"
+              Background="#202020">
+            <TextBlock Grid.Row="0"
+                       Text="{Binding Username}"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Top"
+                       Margin="8"
+                       FontWeight="SemiBold"/>
+        
+            <DropDownButton
+                Grid.Row="0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Margin="8"
+                Content="Add">
+                <DropDownButton.Flyout>
+                    <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                        <MenuItem CornerRadius="4 4 0 0" Margin="0 -4 0 0" Header="Add local save" Command="{Binding AddLocalSaveCommand}"/>
+                        <MenuItem CornerRadius="0 0 4 4" Margin="0 0 0 -4" Header="Add cloud save" Command="{Binding AddCloudSaveCommand}"/>
+                    </MenuFlyout>
+                </DropDownButton.Flyout>
+            </DropDownButton>
+            
+            <Border Grid.Row="1" CornerRadius="8" Background="#303030" Margin="8" ClipToBounds="True">
+                <ListBox ItemsSource="{Binding LocalSaves}"
+                         SelectedItem="{Binding SelectedLocalSave}"
+                         Background="#303030">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LocalSaveInfoViewModel">
+                            <Border CornerRadius="8">
+                                <TextBlock Text="{Binding Name}"
+                                           Classes="ServerStatus"
+                                           Tag="{Binding ExistsOnServer}"/>
+                                
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+        </Grid>
+        
+        <Border Grid.Column="1"
+                Background="#202020"
+                Padding="8">
+            <Border Background="#303030" CornerRadius="8">
+                <StackPanel IsVisible="{Binding SelectedLocalSave, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <Grid>
+                        <TextBlock DataContext="{Binding SelectedLocalSave}"
+                                   Text="{Binding Name}"
+                                   Margin="16"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"
+                                   FontSize="36"
+                                   FontWeight="Bold"/>
+                        
+                        <Button Content="Delete"
+                                Padding="8 4"
+                                Margin="16"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Command="{Binding DeleteLocalSaveCommand}"/>
+                    </Grid>
+                    
+                    <TextBlock DataContext="{Binding SelectedLocalSave}"
+                               IsVisible="{Binding ExistsOnServer, Converter={x:Static BoolConverters.Not}}"
+                               Margin="16" Foreground="Red" FontStyle="Italic" Text="This save doesn't exist on the server anymore."/>
+                    
+                    <TextBlock DataContext="{Binding SelectedLocalSave}"
+                               IsVisible="{Binding InUseBy, Converter={x:Static ObjectConverters.IsNotNull}}"
+                               Margin="16">
+                        <Run Text="In use by"/>
+                        <Run Text="{Binding InUseBy}" FontWeight="SemiBold"/>
+                    </TextBlock>
+                    
+                    <ProgressBar DataContext="{Binding SelectedLocalSave}"
+                                 Height="20" Minimum="0" Maximum="1" ShowProgressText="True" Margin="8 8 8 4"
+                                 Value="{Binding CurrentOperationProgress}"
+                                 IsVisible="{Binding CurrentOperation, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <ProgressBar.ProgressTextFormat>
+                            <MultiBinding StringFormat="{}{0} ({1:P0})">
+                                <Binding Path="CurrentOperation"/>
+                                <Binding Path="CurrentOperationProgress"/>
+                            </MultiBinding>
+                        </ProgressBar.ProgressTextFormat>
+                    </ProgressBar>
+                    
+                    <ProgressBar DataContext="{Binding SelectedLocalSave}"
+                                 Height="20" Minimum="0" Maximum="1" ShowProgressText="True" Margin="8 4 8 8"
+                                 Value="{Binding CurrentSubOperationProgress}"
+                                 IsIndeterminate="{Binding CurrentSubOperationIndeterminate}"
+                                 IsVisible="{Binding CurrentSubOperation, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <ProgressBar.Styles>
+                            <Style Selector="ProgressBar">
+                                <Setter Property="ProgressTextFormat">
+                                    <Setter.Value>
+                                        <MultiBinding StringFormat="{}{0} ({1:P0})">
+                                            <Binding Path="CurrentSubOperation"/>
+                                            <Binding Path="CurrentSubOperationProgress"/>
+                                        </MultiBinding>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                            
+                            <Style Selector="ProgressBar[IsIndeterminate=True]">
+                                <Setter Property="ProgressTextFormat" Value="{Binding CurrentSubOperation}"></Setter>
+                            </Style>
+                        </ProgressBar.Styles>
+                    </ProgressBar>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</Window>
