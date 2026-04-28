@@ -9,6 +9,7 @@
     <ItemGroup>
       <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
+      <PackageReference Include="Octopus.Octodiff" Version="2.0.549" />
       <PackageReference Include="SharpCompress" Version="0.47.4" />
     </ItemGroup>
 

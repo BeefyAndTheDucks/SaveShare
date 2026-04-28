@@ -13,7 +13,7 @@ public class SaveCatalogService : ISaveCatalogService
     private readonly ILocalSavesStore _localSavesStore;
     
     public SaveInfo[] CloudSaves { get; private set; }
-    public LocalSaveEntry[] LocalSaves { get; private set; }
+    public LocalSaveInfo[] LocalSaves { get; private set; }
     public event EventHandler? SavesChanged;
     
     public SaveCatalogService(IServerSession serverSession, ILocalSavesStore localSavesStore)
@@ -27,7 +27,7 @@ public class SaveCatalogService : ISaveCatalogService
         _localSavesStore.SavesChanged += LocalSavesStoreOnSavesChanged;
     }
 
-    private Task LocalSavesStoreOnSavesChanged(LocalSaveEntry[] localSaveEntries, CancellationToken cancellationToken)
+    private Task LocalSavesStoreOnSavesChanged(LocalSaveInfo[] localSaveEntries, CancellationToken cancellationToken)
     {
         LocalSaves = localSaveEntries;
         SavesChanged?.Invoke(this, EventArgs.Empty);
@@ -74,7 +74,7 @@ public class SaveCatalogService : ISaveCatalogService
         SavesChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    public LocalSaveEntry? GetLocalSave(SaveId saveId)
+    public LocalSaveInfo? GetLocalSave(SaveId saveId)
     {
         return LocalSaves.FirstOrDefault(s => s.SaveId == saveId);
     }

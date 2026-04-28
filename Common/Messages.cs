@@ -16,16 +16,17 @@ public enum S2CMessageType
     
     RegisteredNewSave,
     
-    UnpackProgress,
-    
     ReadyForBinaryData,
-    ReadyToSendBinaryData
+    ReadyToSendBinaryData,
+    
+    Progress
 }
 public abstract record S2CMessage(S2CMessageType Type);
 
 public enum ErrorCode
 {
     UnknownMessage,
+    UnexpectedResponse,
     
     FailedToAuthenticate,
     AlreadySignedIn,
@@ -34,12 +35,16 @@ public enum ErrorCode
     OverwriteSaveDataFailed,
     
     SaveDoesNotExist,
+    SaveFilesMissing,
     
     FailedToCheckOut,
     
     FailedToDownload,
     
-    ForceReleaseFailed
+    NotCheckedOut,
+    
+    ForceReleaseFailed,
+    ReleaseFailed
 }
 
 
@@ -72,10 +77,9 @@ public record S2CSuccessMessage(string Message) : S2CMessage(S2CMessageType.Succ
 [S2CMessageType(S2CMessageType.Error)]
 public record S2CErrorMessage(ErrorCode Code, string Message) : S2CMessage(S2CMessageType.Error);
 
-
 // Progress messages
-[S2CMessageType(S2CMessageType.UnpackProgress)]
-public record S2CUnpackProgressMessage(double ProgressNormalized) : S2CMessage(S2CMessageType.UnpackProgress);
+[S2CMessageType(S2CMessageType.Progress)]
+public record S2CProgressMessage(double Progress) : S2CMessage(S2CMessageType.Progress);
 
 // State messages
 [S2CMessageType(S2CMessageType.SavesChanged)]
@@ -91,6 +95,7 @@ public enum C2SMessageType
     ListSaves,
     GetSaveInfo,
     ForceRelease,
+    Release,
     
     RegisterNewSave,
     
@@ -98,8 +103,11 @@ public enum C2SMessageType
     
     CheckoutSave,
     DownloadSave,
+    DownloadSaveChanges,
+    UploadSaveChanges,
     
     ReadyForBinaryData,
+    ReadyToSendBinaryData,
 }
 public abstract record C2SMessage(C2SMessageType Type);
 
@@ -118,6 +126,9 @@ public record C2SGetSaveInfoMessage(SaveId SaveId) : C2SMessage(C2SMessageType.G
 [C2SMessageType(C2SMessageType.ForceRelease)]
 public record C2SForceReleaseMessage(SaveId SaveId) : C2SMessage(C2SMessageType.ForceRelease);
 
+[C2SMessageType(C2SMessageType.Release)]
+public record C2SReleaseMessage(SaveId SaveId) : C2SMessage(C2SMessageType.Release);
+
 [C2SMessageType(C2SMessageType.RegisterNewSave)]
 public record C2SRegisterNewSaveMessage(string Name) : C2SMessage(C2SMessageType.RegisterNewSave);
 
@@ -133,7 +144,14 @@ public record C2SDownloadSaveMessage(SaveId SaveId) : C2SMessage(C2SMessageType.
 [C2SMessageType(C2SMessageType.ReadyForBinaryData)]
 public record C2SReadyForBinaryDataMessage() : C2SMessage(C2SMessageType.ReadyForBinaryData);
 
+[C2SMessageType(C2SMessageType.ReadyToSendBinaryData)]
+public record C2SReadyToSendBinaryDataMessage() : C2SMessage(C2SMessageType.ReadyToSendBinaryData);
 
+[C2SMessageType(C2SMessageType.DownloadSaveChanges)]
+public record C2SDownloadSaveChangesMessage(SaveId SaveId) : C2SMessage(C2SMessageType.DownloadSaveChanges);
+
+[C2SMessageType(C2SMessageType.UploadSaveChanges)]
+public record C2SUploadSaveChangesMessage(SaveId SaveId) : C2SMessage(C2SMessageType.UploadSaveChanges);
 
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]

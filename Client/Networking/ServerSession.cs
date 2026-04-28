@@ -41,6 +41,35 @@ public sealed class ServerSession(ITransport transport) : IServerSession
         }
     }
     
+    private async Task<TStopMessage> ExpectManyAsync<TMessage, TStopMessage>(Action<TMessage> messageReceived, CancellationToken cancellationToken)
+        where TMessage : S2CMessage
+    {
+        while (true)
+        {
+            S2CMessage message = await transport.ReceiveMessageAsync(cancellationToken);
+
+            switch (message)
+            {
+                case TStopMessage stopMessage:
+                    return stopMessage;
+                
+                case TMessage expected:
+                    messageReceived(expected);
+                    break;
+
+                case S2CErrorMessage error:
+                    throw new ServerErrorException(error);
+
+                case S2CSavesChangedMessage savesChanged:
+                    SavesChanged?.Invoke(savesChanged.Saves, cancellationToken);
+                    continue;
+
+                default:
+                    throw new UnexpectedServerMessageException(message.Type);
+            }
+        }
+    }
+    
     private async Task<TMessage> SendAndExpectAsync<TMessage>(
         C2SMessage request,
         CancellationToken cancellationToken)
@@ -49,6 +78,7 @@ public sealed class ServerSession(ITransport transport) : IServerSession
         await transport.SendMessageAsync(request, cancellationToken);
         return await ExpectAsync<TMessage>(cancellationToken);
     }
+    
     #endregion
     
     public async Task ConnectAsync(Uri server, CancellationToken cancellationToken = default)
@@ -171,6 +201,71 @@ public sealed class ServerSession(ITransport transport) : IServerSession
         try
         {
             await SendAndExpectAsync<S2CSuccessMessage>(new C2SForceReleaseMessage(saveId), cancellationToken);
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
+    public async Task ReleaseAsync(SaveId saveId, CancellationToken cancellationToken = default)
+    {
+        await _operationLock.WaitAsync(cancellationToken);
+
+        try
+        {
+            await SendAndExpectAsync<S2CSuccessMessage>(new C2SReleaseMessage(saveId), cancellationToken);
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
+    public async Task DownloadSaveChangesAsync(SaveId saveId,
+        Func<Stream, CancellationToken, Task> readSignaturesDataAsync,
+        Func<Stream, CancellationToken, Task> writeDeltasDataAsync,
+        IProgress<long>? sendSignaturesProgress, 
+        IProgress<double>? createDeltasProgress, 
+        Func<long, IProgress<long>?>? receiveDeltasProgress,
+        CancellationToken cancellationToken = default)
+    {
+        await _operationLock.WaitAsync(cancellationToken);
+        try
+        {
+            await SendAndExpectAsync<S2CReadyForBinaryDataMessage>(new C2SDownloadSaveChangesMessage(saveId), cancellationToken);
+            await transport.SendBinaryAsync(readSignaturesDataAsync, sendSignaturesProgress, cancellationToken);
+            S2CReadyToSendBinaryDataMessage readyToSendMessage =
+                await ExpectManyAsync<S2CProgressMessage, S2CReadyToSendBinaryDataMessage>(
+                    msg => createDeltasProgress?.Report(msg.Progress), cancellationToken);
+            await transport.SendMessageAsync(new C2SReadyForBinaryDataMessage(), cancellationToken);
+            await transport.ReceiveBinaryAsync(writeDeltasDataAsync, receiveDeltasProgress?.Invoke(readyToSendMessage.ByteCount), cancellationToken);
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
+    public async Task UploadSaveChangesAsync(SaveId saveId,
+        Func<Stream, CancellationToken, Task> readSignaturesAsync,
+        Func<Stream, CancellationToken, Task> writeDeltasAsync,
+        IProgress<double>? createSignaturesProgress, Func<long, IProgress<long>?>? receiveSignaturesProgress,
+        IProgress<long>? sendDeltasProgress, IProgress<double>? applyDeltasProgress,
+        CancellationToken cancellationToken = default)
+    {
+        await _operationLock.WaitAsync(cancellationToken);
+        try
+        {
+            await transport.SendMessageAsync(new C2SUploadSaveChangesMessage(saveId), cancellationToken);
+            S2CReadyToSendBinaryDataMessage readyToSendMessage =
+                await ExpectManyAsync<S2CProgressMessage, S2CReadyToSendBinaryDataMessage>(
+                    msg => createSignaturesProgress?.Report(msg.Progress), cancellationToken);
+            await transport.SendMessageAsync(new C2SReadyForBinaryDataMessage(), cancellationToken);
+            await transport.ReceiveBinaryAsync(readSignaturesAsync, receiveSignaturesProgress?.Invoke(readyToSendMessage.ByteCount), cancellationToken);
+            await SendAndExpectAsync<S2CReadyForBinaryDataMessage>(new C2SReadyToSendBinaryDataMessage(), cancellationToken);
+            await transport.SendBinaryAsync(writeDeltasAsync, sendDeltasProgress, cancellationToken);
+            await ExpectManyAsync<S2CProgressMessage, S2CSuccessMessage>(msg => applyDeltasProgress?.Report(msg.Progress), cancellationToken);
         }
         finally
         {

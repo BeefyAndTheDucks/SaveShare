@@ -88,15 +88,16 @@ public static class SaveRegistry
 
     public static async Task<Result> DeleteSave(SaveInfo save, CancellationToken cancellationToken = default) => await DeleteSave(save.SaveId, cancellationToken);
 
-    public static string GetRealSavePath(SaveId saveId) => Path.Combine(GetSaveDirectory(), saveId.ToString());
-    
-    public static Result<string> GetRealSavePath(this SaveInfo saveInfo)
+    public static string GetRealSavePathNoExistsCheck(SaveId saveId) => Path.Combine(GetSaveDirectory(), saveId.ToString());
+    public static Result<string> GetRealSavePath(SaveId saveId)
     {
-        string savePath = Path.Combine(GetSaveDirectory(), saveInfo.SaveId.ToString());
+        string savePath = GetRealSavePathNoExistsCheck(saveId);
         if (Directory.Exists(savePath))
             return savePath;
         return Result<string>.Failure("Real save doesn't exist.");
     }
+
+    public static Result<string> GetRealSavePath(SaveInfo saveInfo) => GetRealSavePath(saveInfo.SaveId);
 
     public static async Task<Result> TryCheckout(SaveId saveId, string userName, CancellationToken cancellationToken = default)
     {

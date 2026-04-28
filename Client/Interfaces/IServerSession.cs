@@ -48,4 +48,25 @@ public interface IServerSession
     Task ForceReleaseAsync(
         SaveId saveId,
         CancellationToken cancellationToken = default);
+    
+    Task ReleaseAsync(
+        SaveId saveId,
+        CancellationToken cancellationToken = default);
+
+    Task DownloadSaveChangesAsync(SaveId saveId,
+        Func<Stream, CancellationToken, Task> readSignaturesDataAsync,
+        Func<Stream, CancellationToken, Task> writeDeltasDataAsync,
+        IProgress<long>? sendSignaturesProgress, 
+        IProgress<double>? createDeltasProgress,
+        Func<long, IProgress<long>?>? receiveDeltasProgress,
+        CancellationToken cancellationToken = default);
+
+    Task UploadSaveChangesAsync(SaveId saveId,
+        Func<Stream, CancellationToken, Task> readSignaturesAsync,
+        Func<Stream, CancellationToken, Task> writeDeltasAsync,
+        IProgress<double>? createSignaturesProgress,
+        Func<long, IProgress<long>?>? receiveSignaturesProgress,
+        IProgress<long>? sendDeltasProgress,
+        IProgress<double>? applyDeltasProgress,
+        CancellationToken cancellationToken = default);
 }

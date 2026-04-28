@@ -10,17 +10,30 @@ public class OverwriteSaveDataMessageHandler : MessageHandler<C2SOverwriteSaveDa
     {
         if (!SaveRegistry.SaveExists(message.SaveId))
         {
-            await Error(ErrorCode.OverwriteSaveDataFailed, "Save does not exist", webSocket, cancellationToken);
+            await Error(ErrorCode.SaveDoesNotExist, "Save does not exist", webSocket, cancellationToken);
             return false;
         }
         
-        string path = SaveRegistry.GetRealSavePath(message.SaveId);
-        Directory.CreateDirectory(path);
+        string path = SaveRegistry.GetRealSavePathNoExistsCheck(message.SaveId);
+        if (!Directory.Exists(path)) Directory.CreateDirectory(path);
         await MessageHelpers.SendMessage(new S2CReadyForBinaryDataMessage(), webSocket, cancellationToken);
-        WebSocketStream stream = WebSocketStream.CreateReadableMessageStream(webSocket);
-        await DirectoryPacker.UnpackDirectory(stream, path, cancellationToken);
+        await using Stream stream = WebSocketStream.Create(webSocket, WebSocketMessageType.Binary);
+        await DirectoryPacker.UnpackDirectoryAsync(stream, path, cancellationToken);
         await MessageHelpers.SendMessage(new S2CSuccessMessage("Successfully overwrote the old save data (if any)"), webSocket, cancellationToken);
+        
+        Result updateResult = await SaveRegistry.UpdateSaveInfo(message.SaveId, info =>
+        {
+            info.LastSyncedByUserName = Program.ConnectionManagerV1.GetUser(webSocket).Username;
+            info.LastSyncedAt = DateTime.UtcNow;
+            return info;
+        }, cancellationToken);
 
-        return false; // Don't propagate updates
+        if (updateResult.Failed)
+        {
+            await Error(ErrorCode.OverwriteSaveDataFailed, "Failed to update save data", webSocket, cancellationToken);
+            return false;
+        }
+
+        return true;
     }
 }

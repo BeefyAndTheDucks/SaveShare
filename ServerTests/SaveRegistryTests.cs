@@ -392,14 +392,14 @@ public sealed class SaveRegistryTests : IDisposable
         Assert.True(createResult.Succeeded, createResult.Error);
 
         // 1. Test failure when the directory is missing
-        Result<string> pathResult = info.GetRealSavePath();
+        Result<string> pathResult = SaveRegistry.GetRealSavePath(info);
         Assert.False(pathResult.Succeeded);
 
         // 2. Test success when the directory exists
         string expectedDirectoryPath = Path.Combine(SaveRegistry.GetSaveDirectory(), saveId.ToString());
         Directory.CreateDirectory(expectedDirectoryPath);
 
-        pathResult = info.GetRealSavePath();
+        pathResult = SaveRegistry.GetRealSavePath(info);
         Assert.True(pathResult.Succeeded);
         Assert.Equal(expectedDirectoryPath, pathResult.Value);
     }

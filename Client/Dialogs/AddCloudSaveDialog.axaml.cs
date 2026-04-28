@@ -47,7 +47,7 @@ public partial class AddCloudSaveDialog : Window
     {
         await _saveCatalogService.RefreshAsync();
 
-        LocalSaveEntry[] localSaves = _saveCatalogService.LocalSaves;
+        LocalSaveInfo[] localSaves = _saveCatalogService.LocalSaves;
         
         CloudSaves.Clear();
         foreach (SaveInfo save in _saveCatalogService.CloudSaves.Where(save => localSaves.All(localSave => localSave.SaveId != save.SaveId)))

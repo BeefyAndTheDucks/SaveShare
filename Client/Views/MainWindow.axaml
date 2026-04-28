@@ -36,19 +36,38 @@
                        Margin="8"
                        FontWeight="SemiBold"/>
         
-            <DropDownButton
-                Grid.Row="0"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Center"
-                Margin="8"
-                Content="Add">
-                <DropDownButton.Flyout>
-                    <MenuFlyout Placement="BottomEdgeAlignedLeft">
-                        <MenuItem CornerRadius="4 4 0 0" Margin="0 -4 0 0" Header="Add local save" Command="{Binding AddLocalSaveCommand}"/>
-                        <MenuItem CornerRadius="0 0 4 4" Margin="0 0 0 -4" Header="Add cloud save" Command="{Binding AddCloudSaveCommand}"/>
-                    </MenuFlyout>
-                </DropDownButton.Flyout>
-            </DropDownButton>
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" HorizontalAlignment="Right">
+                <Button Grid.Column="0"
+                        Height="32"
+                        Width="32"
+                        VerticalAlignment="Center"
+                        Command="{Binding RefreshCommand}">
+                    <Viewbox Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path Data="M21 3V8M21 8H16M21 8L18 5.29168C16.4077 3.86656 14.3051 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C16.2832 21 19.8675 18.008 20.777 14"
+                              Stroke="{Binding $parent[Button].Foreground}"
+                              StrokeThickness="2"
+                              StrokeJoin="Round"
+                              StrokeLineCap="Round"
+                              Fill="Transparent"
+                              Margin="2"/>
+                    </Viewbox>
+                </Button>
+                <DropDownButton
+                    Grid.Column="1"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Height="32"
+                    Margin="8"
+                    Content="Add">
+                    <DropDownButton.Flyout>
+                        <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                            <MenuItem CornerRadius="4 4 0 0" Margin="0 -4 0 0" Header="Add local save" Command="{Binding AddLocalSaveCommand}"/>
+                            <MenuItem CornerRadius="0 0 4 4" Margin="0 0 0 -4" Header="Add cloud save" Command="{Binding AddCloudSaveCommand}"/>
+                        </MenuFlyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+            </Grid>
+            
             
             <Border Grid.Row="1" CornerRadius="8" Background="#303030" Margin="8" ClipToBounds="True">
                 <ListBox ItemsSource="{Binding LocalSaves}"
@@ -72,36 +91,41 @@
                 Background="#202020"
                 Padding="8">
             <Border Background="#303030" CornerRadius="8">
-                <StackPanel IsVisible="{Binding SelectedLocalSave, Converter={x:Static ObjectConverters.IsNotNull}}">
-                    <Grid>
-                        <TextBlock DataContext="{Binding SelectedLocalSave}"
-                                   Text="{Binding Name}"
+                <Grid IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}"
+                      DataContext="{Binding SelectedLocalSave}"
+                      IsEnabled="{Binding CurrentOperation, Converter={x:Static ObjectConverters.IsNull}}"
+                      RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*">
+                    <Grid Grid.Row="0">
+                        <TextBlock Text="{Binding Name}"
                                    Margin="16"
                                    HorizontalAlignment="Left"
                                    VerticalAlignment="Center"
                                    FontSize="36"
                                    FontWeight="Bold"/>
                         
-                        <Button Content="Delete"
-                                Padding="8 4"
-                                Margin="16"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Top"
-                                Command="{Binding DeleteLocalSaveCommand}"/>
+                        <StackPanel Margin="16"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top">
+                            
+                            <Button Content="Delete"
+                                    Padding="8 4"
+                                    Margin="2"
+                                    HorizontalAlignment="Right"
+                                    Command="{Binding DeleteCommand}"/>
+                        
+                            <Button Content="Browse"
+                                    Padding="8 4"
+                                    Margin="2"
+                                    HorizontalAlignment="Right"
+                                    Command="{Binding BrowseCommand}"/>
+                        </StackPanel>
                     </Grid>
                     
-                    <TextBlock DataContext="{Binding SelectedLocalSave}"
+                    <TextBlock Grid.Row="1"
                                IsVisible="{Binding ExistsOnServer, Converter={x:Static BoolConverters.Not}}"
                                Margin="16" Foreground="Red" FontStyle="Italic" Text="This save doesn't exist on the server anymore."/>
                     
-                    <TextBlock DataContext="{Binding SelectedLocalSave}"
-                               IsVisible="{Binding InUseBy, Converter={x:Static ObjectConverters.IsNotNull}}"
-                               Margin="16">
-                        <Run Text="In use by"/>
-                        <Run Text="{Binding InUseBy}" FontWeight="SemiBold"/>
-                    </TextBlock>
-                    
-                    <ProgressBar DataContext="{Binding SelectedLocalSave}"
+                    <ProgressBar Grid.Row="2"
                                  Height="20" Minimum="0" Maximum="1" ShowProgressText="True" Margin="8 8 8 4"
                                  Value="{Binding CurrentOperationProgress}"
                                  IsVisible="{Binding CurrentOperation, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -113,7 +137,7 @@
                         </ProgressBar.ProgressTextFormat>
                     </ProgressBar>
                     
-                    <ProgressBar DataContext="{Binding SelectedLocalSave}"
+                    <ProgressBar Grid.Row="3"
                                  Height="20" Minimum="0" Maximum="1" ShowProgressText="True" Margin="8 4 8 8"
                                  Value="{Binding CurrentSubOperationProgress}"
                                  IsIndeterminate="{Binding CurrentSubOperationIndeterminate}"
@@ -135,7 +159,32 @@
                             </Style>
                         </ProgressBar.Styles>
                     </ProgressBar>
-                </StackPanel>
+                    
+                    <TextBlock Grid.Row="4"
+                               IsVisible="{Binding InUseBy, Converter={x:Static ObjectConverters.IsNotNull}}"
+                               Margin="16 0">
+                        <Run Text="In use by"/>
+                        <Run Text="{Binding InUseBy}" FontWeight="SemiBold"/>
+                    </TextBlock>
+                    
+                    <TextBlock Grid.Row="5"
+                               IsVisible="{Binding LastChangedBy, Converter={x:Static ObjectConverters.IsNotNull}}"
+                               Margin="16 0">
+                        <Run Text="Last changed by"/>
+                        <Run Text="{Binding LastChangedBy}" FontWeight="SemiBold"/>
+                        <Run Text="at"/>
+                        <Run Text="{Binding LastChangedAt}" FontWeight="SemiBold"/>
+                    </TextBlock>
+                    
+                    <Button Grid.Row="6"
+                            VerticalAlignment="Bottom"
+                            HorizontalAlignment="Stretch"
+                            Margin="8"
+                            HorizontalContentAlignment="Center"
+                            Content="{Binding ActionButtonAction}"
+                            IsVisible="{Binding ActionButtonAction, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Command="{Binding ActionButtonPressedCommand}"/>
+                </Grid>
             </Border>
         </Border>
     </Grid>

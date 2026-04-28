@@ -6,6 +6,11 @@ public class Result
     /// Did the request succeed?
     /// </summary>
     public bool Succeeded { get; }
+    
+    /// <summary>
+    /// Did the request fail?
+    /// </summary>
+    public bool Failed => !Succeeded;
 
     /// <summary>
     /// Error message
@@ -72,6 +77,11 @@ public class Result<T>
     /// Did the request succeed?
     /// </summary>
     public bool Succeeded { get; }
+    
+    /// <summary>
+    /// Did the request fail?
+    /// </summary>
+    public bool Failed => !Succeeded;
 
     /// <summary>
     /// Error message

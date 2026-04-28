@@ -45,6 +45,7 @@ sealed class Program
             .WithDeveloperTools()
 #endif
             .WithInterFont()
+            .UseSkia()
             .With(new X11PlatformOptions
             {
                 WmClass = "SaveShareClientGUI",

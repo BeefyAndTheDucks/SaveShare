@@ -3,9 +3,9 @@ using Common;
 
 namespace Server.MessageHandlers.V1;
 
-public class DownloadSaveMessageHandler : MessageHandler<C2SDownloadSaveMessage>
+public class DownloadSaveChangesMessageHandler : MessageHandler<C2SDownloadSaveChangesMessage>
 {
-    protected override async Task<bool> Handle(C2SDownloadSaveMessage message, WebSocket webSocket, CancellationToken cancellationToken = default)
+    protected override async Task<bool> Handle(C2SDownloadSaveChangesMessage message, WebSocket webSocket, CancellationToken cancellationToken = default)
     {
         User user = Program.ConnectionManagerV1.GetUser(webSocket);
         Result<bool> hasCheckoutResult = await SaveRegistry.HasCheckout(message.SaveId, user.Username, cancellationToken);
@@ -27,13 +27,15 @@ public class DownloadSaveMessageHandler : MessageHandler<C2SDownloadSaveMessage>
             await Error(ErrorCode.SaveFilesMissing, getPathResult.Error, webSocket, cancellationToken);
             return false;
         }
-
-        long byteCount = await DirectoryPacker.GetPackedSizeAsync(getPathResult.Value, cancellationToken);
-        await MessageHelpers.SendMessage(new S2CReadyToSendBinaryDataMessage(byteCount), webSocket, cancellationToken);
-        await MessageHelpers.AwaitResponse<C2SReadyForBinaryDataMessage>(webSocket, cancellationToken);
-
+            
+        await MessageHelpers.SendMessage(new S2CReadyForBinaryDataMessage(), webSocket, cancellationToken);
         await using Stream stream = WebSocketStream.Create(webSocket, WebSocketMessageType.Binary);
-        await DirectoryPacker.PackDirectoryAsync(getPathResult.Value, stream, cancellationToken);
+        IProgress<double> progress = new MessageHelpers.MessageProgress(webSocket, cancellationToken);
+        await DirectoryPacker.CreateDeltasAsync(getPathResult.Value, stream, stream, progress, async (byteSize, ct) =>
+        {
+            await MessageHelpers.SendMessage(new S2CReadyToSendBinaryDataMessage(byteSize), webSocket, ct);
+        }, cancellationToken);
+
         return false;
     }
 }

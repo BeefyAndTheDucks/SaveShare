@@ -59,19 +59,14 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
 
         try
         {
-            await using WebSocketStream webSocketStream =
-                WebSocketStream.CreateWritableMessageStream(WebSocket!, WebSocketMessageType.Binary);
-
-            Stream stream = new NonClosingStreamShield(webSocketStream);
+            Stream stream = WebSocketStream.Create(WebSocket!, WebSocketMessageType.Binary);
 
             if (bytesSent is not null)
-                stream = new ProgressStream(webSocketStream, bytesSent.Report);
+                stream = new ProgressStream(stream, bytesSent.Report);
             
             await writeAsync(stream, cancellationToken);
             
-            await stream.FlushAsync(cancellationToken);
-            
-            await webSocketStream.FlushAsync(cancellationToken);
+            await stream.DisposeAsync();
         }
         finally
         {
@@ -88,18 +83,16 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
 
         try
         {
-            await using Stream webSocketStream =
-                WebSocketStream.CreateReadableMessageStream(WebSocket!);
-
-            Stream stream = new NonClosingStreamShield(webSocketStream);
+            Stream stream = WebSocketStream.Create(WebSocket!, WebSocketMessageType.Binary);
 
             if (bytesReceived is not null)
-                stream = new ProgressStream(webSocketStream, bytesReceived.Report);
+                stream = new ProgressStream(stream, bytesReceived.Report);
 
             await readAsync(stream, cancellationToken);
             
-            byte[] drainBuffer = new byte[1024];
-            while (await webSocketStream.ReadAsync(drainBuffer, cancellationToken) > 0) { }
+            //byte[] drainBuffer = new byte[1024];
+            //while (await stream.ReadAsync(drainBuffer, cancellationToken) > 0) { }
+            await stream.DisposeAsync();
         }
         finally
         {

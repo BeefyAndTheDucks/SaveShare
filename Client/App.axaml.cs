@@ -111,6 +111,7 @@ public partial class App : Application
         
         // ViewModels
         services.AddTransient<MainWindowViewModel>();
+        services.AddTransient<LocalSaveInfoViewModel>();
 
         // Views
         services.AddTransient<MainWindow>();

@@ -10,14 +10,17 @@ public static class MessageHandlerFactory
 {
     private static readonly List<MessageHandler> MessageHandlers =
     [
+        new SignInAsNewUserMessageHandler(),
+        new SignInAsExistingUserMessageHandler(),
         new ListSavesMessageHandler(),
         new ForceReleaseMessageHandler(),
+        new ReleaseMessageHandler(),
         new RegisterNewSaveMessageHandler(),
         new OverwriteSaveDataMessageHandler(),
         new CheckoutSaveMessageHandler(),
         new DownloadSaveMessageHandler(),
-        new SignInAsNewUserMessageHandler(),
-        new SignInAsExistingUserMessageHandler()
+        new DownloadSaveChangesMessageHandler(),
+        new UploadSaveChangesMessageHandler(),
     ];
     
     public static async Task<bool> Handle(JObject messageJObject, WebSocket ws, CancellationToken ct = default)
@@ -43,6 +46,8 @@ public static class MessageHelpers
 {
     private static readonly IReadOnlyDictionary<C2SMessageType, Type> ClientMessageTypes =
         MessageTypeHelpers.BuildMessageTypeMap<C2SMessage, C2SMessageTypeAttribute, C2SMessageType>(attr => attr.Type);
+    
+    private static SemaphoreSlim _sendSemaphore = new(1, 1);
     
     private static C2SMessageType ReadClientMessageType(JObject obj)
     {
@@ -114,8 +119,16 @@ public static class MessageHelpers
 
     public static async Task SendMessage(S2CMessage message, WebSocket ws, CancellationToken ct = default)
     {
-        string json = JsonConvert.SerializeObject(message);
-        await ws.SendAsync(Encoding.UTF8.GetBytes(json), WebSocketMessageType.Text, true, ct);
+        await _sendSemaphore.WaitAsync(ct);
+        try
+        {
+            string json = JsonConvert.SerializeObject(message);
+            await ws.SendAsync(Encoding.UTF8.GetBytes(json), WebSocketMessageType.Text, true, ct);
+        }
+        finally
+        {
+            _sendSemaphore.Release();
+        }
     }
 
     public static async Task<JObject> AwaitJsonResponse(WebSocket ws, CancellationToken ct = default)
@@ -134,5 +147,13 @@ public static class MessageHelpers
     {
         JObject messageJsonObject = await AwaitJsonResponse(ws, ct);
         return messageJsonObject.TryParseAsMessage<TMessage>();
+    }
+
+    public class MessageProgress(WebSocket ws, CancellationToken ct = default) : IProgress<double>
+    {
+        public void Report(double value)
+        {
+            _ = SendMessage(new S2CProgressMessage(value), ws, ct);
+        }
     }
 }

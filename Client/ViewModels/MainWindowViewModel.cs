@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
-using Client.Exceptions;
 using Client.Interfaces;
 using Common;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Client.ViewModels;
 
@@ -32,19 +31,26 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly ISelectSaveForUploadService _selectSaveForUploadService;
     private readonly ISaveCatalogService _saveCatalogService;
     private readonly ISelectSaveForDownloadService _selectSaveForDownloadService;
-    private readonly IModalService _modalService;
     
     private readonly Dictionary<string, LocalSaveInfoViewModel> _pendingSaves = new(StringComparer.OrdinalIgnoreCase);
+
+    public MainWindowViewModel()
+    {
+        _authenticationService = null!;
+        _saveSyncService = null!;
+        _selectSaveForUploadService = null!;
+        _saveCatalogService = null!;
+        _selectSaveForDownloadService = null!;
+    }
     
     public MainWindowViewModel(IAuthenticationService authenticationService, ISaveSyncService saveSyncService,
         ISelectSaveForUploadService selectSaveForUploadService, ISaveCatalogService saveCatalogService,
-        ISelectSaveForDownloadService selectSaveForDownloadService, IModalService modalService)
+        ISelectSaveForDownloadService selectSaveForDownloadService)
     {
         _authenticationService = authenticationService;
         _saveSyncService = saveSyncService;
         _selectSaveForUploadService = selectSaveForUploadService;
         _selectSaveForDownloadService = selectSaveForDownloadService;
-        _modalService = modalService;
         _saveCatalogService = saveCatalogService;
         
         _authenticationService.UserChanged += OnUserChanged;
@@ -52,6 +58,19 @@ public partial class MainWindowViewModel : ViewModelBase
         
         if (_authenticationService.CurrentUser is not null)
             Username = _authenticationService.CurrentUser.Username;
+    }
+
+    private bool IsCurrentUser(string? username) => username == _authenticationService.CurrentUser?.Username;
+
+    private string? FormatUsernameString(string? baseUsername)
+    {
+        string? formattedUsername = baseUsername;
+        if (string.IsNullOrWhiteSpace(baseUsername))
+            formattedUsername = null;
+
+        if (IsCurrentUser(baseUsername))
+            formattedUsername = "you";
+        return formattedUsername;
     }
 
     private void SaveCatalogServiceOnSavesChanged(object? sender, EventArgs e)
@@ -68,11 +87,30 @@ public partial class MainWindowViewModel : ViewModelBase
                     .FirstOrDefault(cs => cs!.Value.SaveId == s.SaveId);
                 bool existsOnServer = relatedCloudSave.HasValue;
 
-                string? inUseBy = relatedCloudSave?.CheckedOutByUserName;
-                if (string.IsNullOrWhiteSpace(inUseBy))
-                    inUseBy = null;
+                string? inUseBy = FormatUsernameString(relatedCloudSave?.CheckedOutByUserName);
+                string? lastChangedBy = FormatUsernameString(relatedCloudSave?.LastSyncedByUserName);
                 
-                return new LocalSaveInfoViewModel { Name = s.Name, Id = s.SaveId, InUseBy = inUseBy, ExistsOnServer = existsOnServer };
+                bool isInUseByCurrentUser = IsCurrentUser(relatedCloudSave?.CheckedOutByUserName);
+                bool lastChangedByCurrentUser = IsCurrentUser(relatedCloudSave?.LastSyncedByUserName);
+
+                LocalSaveInfoViewModel.ActionType buttonAction = LocalSaveInfoViewModel.ActionType.Nothing;
+                if (string.IsNullOrEmpty(relatedCloudSave?.CheckedOutByUserName))
+                    buttonAction = LocalSaveInfoViewModel.ActionType.TakeInUse;
+                if (!lastChangedByCurrentUser && !isInUseByCurrentUser)
+                    buttonAction = LocalSaveInfoViewModel.ActionType.DownloadChanges;
+                if (isInUseByCurrentUser)
+                    buttonAction = LocalSaveInfoViewModel.ActionType.UploadChanges;
+                
+                LocalSaveInfoViewModel vm = App.Services.GetRequiredService<LocalSaveInfoViewModel>();
+                vm.Name = s.Name;
+                vm.Id = s.SaveId;
+                vm.InUseBy = inUseBy;
+                vm.ExistsOnServer = existsOnServer;
+                vm.LastChangedBy = lastChangedBy;
+                vm.LastChangedAt = relatedCloudSave?.LastSyncedAt;
+                vm.ActionButtonPressedActionType = buttonAction;
+                vm.OnActionButtonClicked += SelectedLocalSaveOnActionButtonClicked;
+                return vm;
             })
             .ToList();
 
@@ -97,6 +135,11 @@ public partial class MainWindowViewModel : ViewModelBase
                     existing.Id = newItem.Id;
                     existing.ExistsOnServer = newItem.ExistsOnServer;
                     existing.Name = newItem.Name;
+                    existing.LastChangedAt = newItem.LastChangedAt;
+                    existing.LastChangedBy = newItem.LastChangedBy;
+                    existing.InUseBy = newItem.InUseBy;
+                    existing.OnActionButtonClicked = newItem.OnActionButtonClicked;
+                    existing.ActionButtonPressedActionType = newItem.ActionButtonPressedActionType;
                     freshList[i] = existing;
                 }
             }
@@ -114,34 +157,6 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Username = user?.Username ?? "NOT SIGNED IN";
         });
-    }
-
-    [RelayCommand]
-    private async Task DeleteLocalSaveAsync(CancellationToken cancellationToken)
-    {
-        if (SelectedLocalSave is null)
-            return;
-
-        bool delete = await _modalService.ShowAsync("Are you sure?",
-            $"Are you sure you want to delete {SelectedLocalSave.Name}?", "Yes", "No", cancellationToken);
-
-        if (!delete)
-            return;
-
-        bool deleteFromFiles = await _modalService.ShowAsync("Delete local files?",
-            $"Would you like to delete the local files for {SelectedLocalSave.Name} as well?", "Yes", "No", cancellationToken);
-
-        if (deleteFromFiles)
-        {
-            LocalSaveEntry? localSaveEntry = _saveCatalogService.GetLocalSave(SelectedLocalSave.Id);
-
-            if (localSaveEntry is null)
-                throw new SaveNotFoundException();
-            
-            Directory.Delete(localSaveEntry.LocalPath, true);
-        }
-        
-        await _saveCatalogService.DeleteLocalSave(SelectedLocalSave.Id, cancellationToken);
     }
     
     [RelayCommand]
@@ -170,6 +185,69 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             await _saveSyncService.DownloadCloudSaveAsync(result.SaveInfo.SaveId, result.TargetPath, progress, token);
         }, cancellationToken: cancellationToken);
+    }
+
+    [RelayCommand]
+    private Task RefreshAsync(CancellationToken cancellationToken)
+    {
+        return _saveCatalogService.RefreshAsync(cancellationToken);
+    }
+
+    private Task SelectedLocalSaveOnActionButtonClicked(LocalSaveInfoViewModel vm, CancellationToken cancellationToken = default)
+    {
+        return vm.ActionButtonPressedActionType switch
+        {
+            LocalSaveInfoViewModel.ActionType.Nothing => Task.CompletedTask,
+            LocalSaveInfoViewModel.ActionType.UploadChanges => UploadChanges(vm, cancellationToken),
+            LocalSaveInfoViewModel.ActionType.DownloadChanges => DownloadChanges(vm, cancellationToken),
+            LocalSaveInfoViewModel.ActionType.TakeInUse => TakeInUse(vm, cancellationToken),
+            _ => throw new ArgumentOutOfRangeException(nameof(vm.ActionButtonPressedActionType), vm.ActionButtonPressedActionType, null)
+        };
+    }
+
+    private async Task TakeInUse(LocalSaveInfoViewModel vm, CancellationToken cancellationToken)
+    {
+        await _saveSyncService.CheckoutCloudSaveAsync(vm.Id, cancellationToken);
+    }
+
+    private async Task DownloadChanges(LocalSaveInfoViewModel vm, CancellationToken cancellationToken)
+    {
+        vm.CurrentOperation = "Downloading changes...";
+        vm.CurrentOperationProgress = 0.0;
+        vm.CurrentSubOperation = "Preparing...";
+        vm.CurrentSubOperationIndeterminate = true;
+
+        double index = 0;
+        LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index / 5, index++ / 5, "Building signatures...");
+        LocalSaveViewModelProgress sendSignaturesProgress = new(vm, index / 5, index++ / 5, "Sending signatures...");
+        LocalSaveViewModelProgress buildDeltasProgress = new(vm, index / 5, index++ / 5, "Server - Building deltas...");
+        LocalSaveViewModelProgress receiveDeltasProgress = new(vm, index / 5, index++ / 5, "Receiving deltas...");
+        LocalSaveViewModelProgress applyDeltasProgress = new(vm, index / 5, index++ / 5, "Applying deltas...");
+
+        await _saveSyncService.DownloadCloudSaveChangesAsync(vm.Id, buildSignaturesProgress, sendSignaturesProgress,
+            buildDeltasProgress, receiveDeltasProgress, applyDeltasProgress, cancellationToken);
+        vm.CurrentOperation = null;
+        vm.CurrentSubOperation = null;
+    }
+
+    private async Task UploadChanges(LocalSaveInfoViewModel vm, CancellationToken cancellationToken)
+    {
+        vm.CurrentOperation = "Uploading changes...";
+        vm.CurrentOperationProgress = 0.0;
+        vm.CurrentSubOperation = "Preparing...";
+        vm.CurrentSubOperationIndeterminate = true;
+
+        double index = 0;
+        LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index / 5, index++ / 5, "Server - Building signatures...");
+        LocalSaveViewModelProgress receiveSignaturesProgress = new(vm, index / 5, index++ / 5, "Receiving signatures...");
+        LocalSaveViewModelProgress buildDeltasProgress = new(vm, index / 5, index++ / 5, "Building deltas...");
+        LocalSaveViewModelProgress sendDeltasProgress = new(vm, index / 5, index++ / 5, "Sending deltas...");
+        LocalSaveViewModelProgress applyDeltasProgress = new(vm, index / 5, index++ / 5, "Server - Applying deltas...");
+        
+        await _saveSyncService.UploadLocalSaveChangesAsync(vm.Id, buildSignaturesProgress, receiveSignaturesProgress,
+            buildDeltasProgress, sendDeltasProgress, applyDeltasProgress, cancellationToken);
+        vm.CurrentOperation = null;
+        vm.CurrentSubOperation = null;
     }
     
     #region Task System
@@ -224,7 +302,7 @@ public partial class MainWindowViewModel : ViewModelBase
         
         SelectedLocalSave = shadowVm;
         
-        LocalSaveViewModelProgress progress = new(shadowVm, 0.5, progressOperation);
+        LocalSaveViewModelProgress progress = new(shadowVm, 0.1, 1.0, progressOperation);
         
         return new TaskInfo(shadowVm, progress, saveInfo);
     }
@@ -241,27 +319,29 @@ public partial class MainWindowViewModel : ViewModelBase
         task.ViewModel.CurrentSubOperation = null;
     }
 
-    private static LocalSaveInfoViewModel CreateShadowVm(TaskSaveInfo saveInfo, string operation, double operationProgress,
+    private LocalSaveInfoViewModel CreateShadowVm(TaskSaveInfo saveInfo, string operation, double operationProgress,
         string initialSubOperation = "Preparing...", bool initialSubOperationIndeterminate = true)
     {
-        return new LocalSaveInfoViewModel
-        {
-            Id = saveInfo.SaveId,
-            Name = saveInfo.SaveName,
-            CurrentOperation = operation,
-            CurrentOperationProgress = operationProgress,
-            CurrentSubOperation = initialSubOperation,
-            CurrentSubOperationIndeterminate = initialSubOperationIndeterminate
-        };
+        LocalSaveInfoViewModel vm = App.Services.GetRequiredService<LocalSaveInfoViewModel>();
+        
+        vm.Id = saveInfo.SaveId;
+        vm.Name = saveInfo.SaveName;
+        vm.CurrentOperation = operation;
+        vm.CurrentOperationProgress = operationProgress;
+        vm.CurrentSubOperation = initialSubOperation;
+        vm.CurrentSubOperationIndeterminate = initialSubOperationIndeterminate;
+        vm.OnActionButtonClicked += SelectedLocalSaveOnActionButtonClicked;
+
+        return vm;
     }
     #endregion
 }
 
-public class LocalSaveViewModelProgress(LocalSaveInfoViewModel viewModel, double overallProgress, string subOperationName) : IProgress<double>
+public class LocalSaveViewModelProgress(LocalSaveInfoViewModel viewModel, double overallProgressBegin, double overallProgressEnd, string subOperationName) : IProgress<double>
 {
     public void Report(double value)
     {
-        viewModel.CurrentOperationProgress = overallProgress;
+        viewModel.CurrentOperationProgress = double.Lerp(overallProgressBegin, overallProgressEnd, value);
         viewModel.CurrentSubOperation = subOperationName;
         viewModel.CurrentSubOperationProgress = value;
         viewModel.CurrentSubOperationIndeterminate = false;

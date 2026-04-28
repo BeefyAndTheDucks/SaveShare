@@ -8,7 +8,7 @@ namespace Client.Interfaces;
 public interface ISaveCatalogService
 {
     SaveInfo[] CloudSaves { get; }
-    LocalSaveEntry[] LocalSaves { get; }
+    LocalSaveInfo[] LocalSaves { get; }
     
     event EventHandler? SavesChanged;
 
@@ -18,5 +18,5 @@ public interface ISaveCatalogService
     
     Result<SaveInfo> GetSaveInfo(SaveId saveId);
     Task DeleteLocalSave(SaveId saveId, CancellationToken cancellationToken = default);
-    LocalSaveEntry? GetLocalSave(SaveId saveId);
+    LocalSaveInfo? GetLocalSave(SaveId saveId);
 }
