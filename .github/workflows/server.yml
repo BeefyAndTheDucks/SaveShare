@@ -41,8 +41,8 @@ jobs:
           
       - name: Restore
         run: |
-          dotnet restore Server/Server.csproj
-          dotnet restore ServerTests/ServerTests.csproj
+          dotnet restore Server/Server.csproj --runtime ${{ matrix.rid }}
+          dotnet restore ServerTests/ServerTests.csproj --runtime ${{ matrix.rid }}
       
       - name: Run xUnit tests
         # Run only on win-x64 so we don't test twice. If we need per-platform testing just remove the if.

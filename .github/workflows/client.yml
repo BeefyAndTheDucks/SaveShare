@@ -36,7 +36,7 @@ jobs:
           dotnet-version: '10.0.x'
       
       - name: Restore
-        run: dotnet restore Client/Client.csproj
+        run: dotnet restore Client/Client.csproj --runtime ${{ matrix.rid }}
         
       - name: Build & Publish
         run: |
