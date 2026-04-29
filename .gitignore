@@ -10,4 +10,6 @@ Server/users.json
 Server/settings.json
 
 # Test Save
-TestSave
+TestSave/
+
+test-results/
