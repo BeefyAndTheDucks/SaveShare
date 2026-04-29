@@ -48,7 +48,7 @@ jobs:
         # Run only on win-x64 so we don't test twice. If we need per-platform testing just remove the if.
         if: matrix.rid == 'win-x64'
         run: |
-          dotnet test ServerTests/ServerTests.csproj \
+          dotnet test --project ServerTests/ServerTests.csproj \
             --no-restore \
             --configuration Release \
             --logger "console;verbosity=normal" \
