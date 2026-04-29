@@ -48,9 +48,19 @@ jobs:
         # Run only on win-x64 so we don't test twice. If we need per-platform testing just remove the if.
         if: matrix.rid == 'win-x64'
         run: |
-          dotnet run --project ServerTests/ServerTests.csproj \
+          dotnet test ServerTests/ServerTests.csproj \
             --no-restore \
-            --configuration Release
+            --configuration Release \
+            --logger "console;verbosity=normal" \
+            --results-directory test-results
+          
+      - name: Upload test results
+        if: matrix.rid == 'win-x64' && (success() || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results
+          retention-days: 7
           
       - name: Build & Publish
         run: |
