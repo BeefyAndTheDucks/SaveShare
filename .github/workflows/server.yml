@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    paths:
+      - 'Server/**'
+      - 'Common/**'
+      - 'ServerTests/**'
+      - '.github/workflows/server.yml'
+  pull_request:
+    paths:
+      - 'Server/**'
+      - 'Common/**'
+      - 'ServerTests/**'
+      - '.github/workflows/server.yml'
+    
+jobs:
+  server:
+    name: Server (${{ matrix.rid }})
+    runs-on: ubuntu-latest
+    
+    strategy: 
+      fail-fast: false
+      matrix: 
+        include:
+          - rid: win-x64
+            output: server-win-x64
+          - rid: linux-x64
+            output: server-linux-x64
+          - rid: linux-arm64
+            output: server-linux-arm64
+            
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with: 
+          dotnet-version: '10.0.x'
+          
+      - name: Restore
+        run: |
+          dotnet restore Server/Server.csproj
+          dotnet restore ServerTests/ServerTests.csproj
+      
+      - name: Run xUnit tests
+        # Run only on win-x64 so we don't test twice. If we need per-platform testing just remove the if.
+        if: matrix.rid == 'win-x64'
+        run: |
+          dotnet test ServerTests/ServerTests.csproj \
+            --configuration Release \
+            --logger "console;verbosity=normal" \
+            --results-directory test-results
+          
+      - name: Upload test results
+        if: matrix.rid == 'win-x64' && (success() || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results
+          retention-days: 7
+          
+      - name: Build & Publish
+        run: |
+          dotnet publish Server/Server.csproj \
+            --configuration Release \
+            --runtime ${{ matrix.rid }} \
+            --self-contained true \
+            --output publish/${{ matrix.output }} \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true
+          
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: publish/${{ matrix.output }}
+          retention-days: 7

@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    paths:
+      - 'Client/**'
+      - 'Common/**'
+      - '.github/workflows/client.yml'
+  pull_request:
+    paths:
+      - 'Client/**'
+      - 'Common/**'
+      - '.github/workflows/client.yml'
+    
+jobs: 
+  client:
+    name: Client (${{ matrix.rid }})
+    runs-on: ubuntu-latest
+    
+    strategy: 
+      fail-fast: false
+      matrix: 
+        include:
+          - rid: win-x64
+            output: client-win-x64
+          - rid: linux-x64
+            output: client-linux-x64
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      
+      - name: Restore
+        run: dotnet restore Client/Client.csproj
+        
+      - name: Build & Publish
+        run: |
+          dotnet publish Client/Client.csproj \
+            --configuration Release \
+            --runtime ${{ matrix.rid }} \
+            --self-contained true \
+            --output publish/${{ matrix.output }} \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true
+        
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: ${{ matrix.output }}
+          path: publish/${{ matrix.output }}
+          retention-days: 7
