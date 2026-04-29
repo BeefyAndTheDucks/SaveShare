@@ -14,18 +14,26 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
     private ClientWebSocket? WebSocket { get; set; }
 
     public bool IsConnected => WebSocket?.State == WebSocketState.Open;
-    
+    public event EventHandler? ConnectionComplete;
+
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly SemaphoreSlim _receiveLock = new(1, 1);
 
-    public async Task ConnectAsync(Uri server, CancellationToken cancellationToken)
+    public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
     {
         if (IsConnected)
             throw new InvalidOperationException("Already connected.");
 
-        WebSocket = new ClientWebSocket();
-        await WebSocket.ConnectAsync(server, cancellationToken);
-        Console.WriteLine("Connected to server");
+        try
+        {
+            WebSocket = new ClientWebSocket();
+            await WebSocket.ConnectAsync(uri, cancellationToken);
+            Console.WriteLine("Connected to server");
+        }
+        finally
+        {
+            ConnectionComplete?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     public async Task SendMessageAsync(C2SMessage message, CancellationToken cancellationToken = default)
@@ -107,7 +115,8 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
 
         if (WebSocket != null)
         {
-            await WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client shutting down", CancellationToken.None);
+            if (IsConnected)
+                await WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client shutting down", CancellationToken.None);
             await CastAndDispose(WebSocket);
         }
 

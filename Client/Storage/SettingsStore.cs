@@ -7,9 +7,9 @@ namespace Client.Storage;
 
 public sealed class SettingsStore(IAppDataPaths paths, IFileStore fileStore) : ISettingsStore
 {
-    public async Task<AppSettings> LoadAsync(CancellationToken cancellationToken = default)
+    public async Task<AppSettings?> LoadAsync(CancellationToken cancellationToken = default)
     {
-        return await fileStore.ReadAsync<AppSettings>(paths.AppSettingsFilePath, cancellationToken) ?? new AppSettings(new Uri("ws://server.dev.localhost:5144/v1/ws"));
+        return await fileStore.ReadAsync<AppSettings>(paths.AppSettingsFilePath, cancellationToken) ?? default;
     }
 
     public Task SaveAsync(AppSettings settings, CancellationToken cancellationToken = default)

@@ -11,61 +11,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\bom.json" />
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\Ghidra\Features\Base\data\typeinfo\golang\go1.15.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\Ghidra\Features\Base\data\typeinfo\golang\go1.16.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\Ghidra\Features\Base\data\typeinfo\golang\go1.17.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\Ghidra\Features\Base\data\typeinfo\golang\go1.18.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\Ghidra\Features\Base\data\typeinfo\golang\go1.19.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\Ghidra\Features\Base\data\typeinfo\golang\go1.20.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\Ghidra\Features\Base\data\typeinfo\golang\go1.21.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\Ghidra\Features\Base\data\typeinfo\golang\go1.22.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\Ghidra\Features\Base\data\typeinfo\golang\go1.23.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\Ghidra\Features\Base\data\typeinfo\golang\go1.24.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b2deeeb4-e647-496d-aab6-c583a753668e\Ghidra\Features\Base\data\typeinfo\golang\go1.25.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\bom.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\Ghidra\Features\Base\data\typeinfo\golang\go1.15.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\Ghidra\Features\Base\data\typeinfo\golang\go1.16.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\Ghidra\Features\Base\data\typeinfo\golang\go1.17.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\Ghidra\Features\Base\data\typeinfo\golang\go1.18.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\Ghidra\Features\Base\data\typeinfo\golang\go1.19.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\Ghidra\Features\Base\data\typeinfo\golang\go1.20.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\Ghidra\Features\Base\data\typeinfo\golang\go1.21.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\Ghidra\Features\Base\data\typeinfo\golang\go1.22.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\Ghidra\Features\Base\data\typeinfo\golang\go1.23.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\Ghidra\Features\Base\data\typeinfo\golang\go1.24.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\3f47811b-0487-4fa3-82dc-b62a13849a7c\Ghidra\Features\Base\data\typeinfo\golang\go1.25.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\bom.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\Ghidra\Features\Base\data\typeinfo\golang\go1.15.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\Ghidra\Features\Base\data\typeinfo\golang\go1.16.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\Ghidra\Features\Base\data\typeinfo\golang\go1.17.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\Ghidra\Features\Base\data\typeinfo\golang\go1.18.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\Ghidra\Features\Base\data\typeinfo\golang\go1.19.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\Ghidra\Features\Base\data\typeinfo\golang\go1.20.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\Ghidra\Features\Base\data\typeinfo\golang\go1.21.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\Ghidra\Features\Base\data\typeinfo\golang\go1.22.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\Ghidra\Features\Base\data\typeinfo\golang\go1.23.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\Ghidra\Features\Base\data\typeinfo\golang\go1.24.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\b28bb5c8-d72e-434f-ae73-763f8a154dbe\Ghidra\Features\Base\data\typeinfo\golang\go1.25.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\8b98371f-075d-4f1a-86bb-ebecb1016eff.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\bom.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\Ghidra\Features\Base\data\typeinfo\golang\go1.15.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\Ghidra\Features\Base\data\typeinfo\golang\go1.16.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\Ghidra\Features\Base\data\typeinfo\golang\go1.17.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\Ghidra\Features\Base\data\typeinfo\golang\go1.18.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\Ghidra\Features\Base\data\typeinfo\golang\go1.19.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\Ghidra\Features\Base\data\typeinfo\golang\go1.20.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\Ghidra\Features\Base\data\typeinfo\golang\go1.21.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\Ghidra\Features\Base\data\typeinfo\golang\go1.22.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\Ghidra\Features\Base\data\typeinfo\golang\go1.23.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\Ghidra\Features\Base\data\typeinfo\golang\go1.24.0.json" />
-      <_ContentIncludedByDefault Remove="Saves\d1e49ab5-281e-40ef-bb90-4f34c87359b8\Ghidra\Features\Base\data\typeinfo\golang\go1.25.0.json" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Compile Remove="Saves\**" />
     </ItemGroup>
 
@@ -75,6 +20,8 @@
 
     <ItemGroup>
       <Content Remove="Saves\**" />
+      <Content Remove="users.json" />
+      <Content Remove="settings.json" />
     </ItemGroup>
 
     <ItemGroup>

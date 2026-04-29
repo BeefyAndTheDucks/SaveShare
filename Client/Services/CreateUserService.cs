@@ -13,7 +13,10 @@ public class CreateUserService(IMainWindowProvider mainWindowProvider) : ICreate
         
         CreateNewUserDialog.Result result = await dialog.ShowDialog<CreateNewUserDialog.Result>(mainWindowProvider.MainWindow);
         if (result is not { Valid: true })
+        {
+            App.Close();
             return null;
+        }
         
         return new CreateUserResult(result.UserName!);
     }

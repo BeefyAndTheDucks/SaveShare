@@ -12,6 +12,11 @@ public sealed class ServerSession(ITransport transport) : IServerSession
 {
     public event Func<SaveInfo[], CancellationToken, Task>? SavesChanged;
     public bool IsConnected => transport.IsConnected;
+    public event EventHandler? ConnectionComplete
+    {
+        add => transport.ConnectionComplete += value;
+        remove => transport.ConnectionComplete -= value;
+    }
 
     private readonly SemaphoreSlim _operationLock = new(1, 1);
 
@@ -81,9 +86,9 @@ public sealed class ServerSession(ITransport transport) : IServerSession
     
     #endregion
     
-    public async Task ConnectAsync(Uri server, CancellationToken cancellationToken = default)
+    public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default)
     {
-        await transport.ConnectAsync(server, cancellationToken);
+        await transport.ConnectAsync(uri, cancellationToken);
     }
 
     public async Task<S2CSuccessfullySignedInMessage> SignInAsExistingUserAsync(Guid userId,

@@ -7,3 +7,7 @@ riderModule.iml
 # Server state
 Server/Saves
 Server/users.json
+Server/settings.json
+
+# Test Save
+TestSave

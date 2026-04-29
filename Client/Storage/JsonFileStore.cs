@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Client.Interfaces;
 using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Client.Storage;
 

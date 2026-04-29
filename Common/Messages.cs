@@ -1,4 +1,5 @@
 using System.Reflection;
+using Newtonsoft.Json;
 
 namespace Common;
 
@@ -21,7 +22,7 @@ public enum S2CMessageType
     
     Progress
 }
-public abstract record S2CMessage(S2CMessageType Type);
+public abstract record S2CMessage (S2CMessageType Type);
 
 public enum ErrorCode
 {
@@ -51,7 +52,7 @@ public enum ErrorCode
 
 // Direct operation result messages
 [S2CMessageType(S2CMessageType.SuccessfullySignedIn)]
-public record S2CSuccessfullySignedInMessage(string UserName) : S2CMessage(S2CMessageType.SuccessfullySignedIn);
+public record S2CSuccessfullySignedInMessage (string UserName) : S2CMessage(S2CMessageType.SuccessfullySignedIn);
 
 [S2CMessageType(S2CMessageType.NewUserCreated)]
 public record S2CNewUserCreatedMessage(Guid Id) : S2CMessage(S2CMessageType.NewUserCreated);

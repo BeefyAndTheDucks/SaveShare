@@ -6,6 +6,8 @@ public static class Program
 
     public static void Main(string[] args)
     {
+        ServerSettings.Initialize();
+        
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         WebApplication app = builder.Build();
 

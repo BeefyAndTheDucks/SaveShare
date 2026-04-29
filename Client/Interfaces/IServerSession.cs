@@ -11,8 +11,9 @@ public interface IServerSession
     event Func<SaveInfo[], CancellationToken, Task>? SavesChanged;
     
     bool IsConnected { get; }
+    event EventHandler? ConnectionComplete;
     
-    Task ConnectAsync(Uri server, CancellationToken cancellationToken = default);
+    Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default);
     
     Task<S2CSuccessfullySignedInMessage> SignInAsExistingUserAsync(
         Guid userId,

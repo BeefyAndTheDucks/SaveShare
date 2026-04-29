@@ -11,9 +11,9 @@ public static class SaveRegistry
 
     public static string GetSaveDirectory()
     {
-        if (!Directory.Exists(ServerSettings.SavePath))
-            Directory.CreateDirectory(ServerSettings.SavePath);
-        return ServerSettings.SavePath;
+        if (!Directory.Exists(ServerSettings.Instance.SavePath))
+            Directory.CreateDirectory(ServerSettings.Instance.SavePath);
+        return ServerSettings.Instance.SavePath;
     }
         
     public static string GetSaveMetaPath(SaveId saveId) => Path.Combine(GetSaveDirectory(), saveId + SaveInfo.FILE_EXTENSION);

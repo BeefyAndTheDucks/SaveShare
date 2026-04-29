@@ -12,8 +12,4 @@
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>
-             
-    <Application.Resources>
-        <Geometry x:Key="Refresh">avares://Client/</Geometry>
-    </Application.Resources>
 </Application>

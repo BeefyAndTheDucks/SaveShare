@@ -7,7 +7,10 @@
         <entry key="Client/Dialogs/AddCloudSaveDialog.axaml" value="Client/Client.csproj" />
         <entry key="Client/Dialogs/AddLocalSaveDialog.axaml" value="Client/Client.csproj" />
         <entry key="Client/Dialogs/CreateNewUserDialog.axaml" value="Client/Client.csproj" />
+        <entry key="Client/Dialogs/InitialSetupWindow.axaml" value="Client/Client.csproj" />
         <entry key="Client/Dialogs/ModalDialog.axaml" value="Client/Client.csproj" />
+        <entry key="Client/Dialogs/NoConnectionDialog.axaml" value="Client/Client.csproj" />
+        <entry key="Client/Dialogs/SettingsDialog.axaml" value="Client/Client.csproj" />
         <entry key="Client/MainWindow.axaml" value="Client/Client.csproj" />
         <entry key="Client/Views/MainWindow.axaml" value="Client/Client.csproj" />
         <entry key="GUI/MainWindow.axaml" value="GUI/GUI.csproj" />

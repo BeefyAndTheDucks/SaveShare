@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using Common;
 using Newtonsoft.Json.Linq;
@@ -9,8 +10,8 @@ public class ConnectionManagerV1(CancellationToken exitToken)
 {
     private readonly List<WebSocket> _activeConnections = [];
     
-    private readonly Dictionary<WebSocket, User> _users = new();
-    private readonly Dictionary<WebSocket, bool> _shouldUpdateSaveList = new();
+    private readonly ConcurrentDictionary<WebSocket, User> _users = new();
+    private readonly ConcurrentDictionary<WebSocket, bool> _shouldUpdateSaveList = new();
     
     public User GetUser(WebSocket ws) => _users[ws];
 
@@ -49,7 +50,7 @@ public class ConnectionManagerV1(CancellationToken exitToken)
     
         using WebSocket ws = await context.WebSockets.AcceptWebSocketAsync();
         _activeConnections.Add(ws);
-        _shouldUpdateSaveList.Add(ws, false);
+        _shouldUpdateSaveList.TryAdd(ws, false);
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted, exitToken);
 
         bool signedIn = false;
@@ -90,8 +91,8 @@ public class ConnectionManagerV1(CancellationToken exitToken)
         finally
         {
             _activeConnections.Remove(ws);
-            _shouldUpdateSaveList.Remove(ws);
-            _users.Remove(ws);
+            _shouldUpdateSaveList.Remove(ws, out _);
+            _users.TryRemove(ws, out _);
         }
     }
 }

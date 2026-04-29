@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using System.Threading.Tasks;
@@ -108,6 +109,10 @@ public partial class App : Application
         services.AddSingleton<IFolderPickerService, FolderPickerService>();
         services.AddSingleton<ICreateUserService, CreateUserService>();
         services.AddSingleton<IModalService, ModalService>();
+        services.AddSingleton<IOpenSettingsService, OpenSettingsService>();
+        services.AddSingleton<IServerStatusService, ServerStatusService>();
+        services.AddSingleton<INoConnectionHandlerService, NoConnectionHandlerService>();
+        services.AddSingleton<IInitialSetupService, InitialSetupService>();
         
         // ViewModels
         services.AddTransient<MainWindowViewModel>();
@@ -117,8 +122,24 @@ public partial class App : Application
         services.AddTransient<MainWindow>();
         services.AddTransient<AddCloudSaveDialog>();
         services.AddTransient<AddLocalSaveDialog>();
+        services.AddTransient<SettingsDialog>();
         
         // Providers
         services.AddSingleton<IMainWindowProvider, MainWindowProvider>();
+    }
+
+    public static void Restart()
+    {
+        string? path = Process.GetCurrentProcess().MainModule?.FileName;
+        if (path == null) return;
+        Process.Start(path);
+        if (Current?.ApplicationLifetime is IControlledApplicationLifetime lifetime)
+            lifetime.Shutdown();
+    }
+
+    public static void Close()
+    {
+        if (Current?.ApplicationLifetime is IControlledApplicationLifetime lifetime)
+            lifetime.Shutdown();
     }
 }

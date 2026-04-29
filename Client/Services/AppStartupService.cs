@@ -7,12 +7,28 @@ using Client.Interfaces;
 
 namespace Client.Services;
 
-public sealed class AppStartupService(IConnectionManager connectionManager, ISaveCatalogService saveCatalogService, ILoginCoordinator loginCoordinator) : IAppStartupService
+public sealed class AppStartupService(IConnectionManager connectionManager, ISaveCatalogService saveCatalogService, ILoginCoordinator loginCoordinator, ISettingsStore settingsStore, IInitialSetupService initialSetupService) : IAppStartupService
 {
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
+        AppSettings? appSettings = await settingsStore.LoadAsync(cancellationToken);
+
+        if (appSettings == null || string.IsNullOrWhiteSpace(appSettings.ServerUri.ToString()))
+        {
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
+            {
+                while (!(lifetime.MainWindow?.IsVisible ?? false))
+                    await Task.Yield();
+            }
+            SetupResult? result = await initialSetupService.ShowAsync(null, cancellationToken);
+            if (result is null)
+                return;
+            appSettings = new AppSettings(result.ServerUri);
+            await settingsStore.SaveAsync(appSettings, cancellationToken);
+        }
+        
         await connectionManager.ConnectAsync(
-            new Uri("ws://server.dev.localhost:5144/v1/ws"),
+            appSettings.ServerUri,
             cancellationToken);
 
         try

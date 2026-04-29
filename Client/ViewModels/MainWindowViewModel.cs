@@ -18,19 +18,22 @@ public partial class MainWindowViewModel : ViewModelBase
     public partial string? Username { get; set; } = "SIGNING IN...";
     
     [ObservableProperty]
-    public partial CloudSaveInfoViewModel[]? CloudSaves { get; set; }
-    
-    [ObservableProperty]
     public partial LocalSaveInfoViewModel[]? LocalSaves { get; set; }
     
     [ObservableProperty]
     public partial LocalSaveInfoViewModel? SelectedLocalSave { get; set; }
+    
+    [ObservableProperty]
+    public partial bool IsConnectedToServer { get; set; }
     
     private readonly IAuthenticationService _authenticationService;
     private readonly ISaveSyncService _saveSyncService;
     private readonly ISelectSaveForUploadService _selectSaveForUploadService;
     private readonly ISaveCatalogService _saveCatalogService;
     private readonly ISelectSaveForDownloadService _selectSaveForDownloadService;
+    private readonly IOpenSettingsService _openSettingsService;
+    private readonly INoConnectionHandlerService _noConnectionHandlerService;
+    private readonly IServerStatusService _serverStatusService;
     
     private readonly Dictionary<string, LocalSaveInfoViewModel> _pendingSaves = new(StringComparer.OrdinalIgnoreCase);
 
@@ -41,23 +44,39 @@ public partial class MainWindowViewModel : ViewModelBase
         _selectSaveForUploadService = null!;
         _saveCatalogService = null!;
         _selectSaveForDownloadService = null!;
+        _openSettingsService = null!;
+        _noConnectionHandlerService = null!;
+        _serverStatusService = null!;
     }
     
     public MainWindowViewModel(IAuthenticationService authenticationService, ISaveSyncService saveSyncService,
         ISelectSaveForUploadService selectSaveForUploadService, ISaveCatalogService saveCatalogService,
-        ISelectSaveForDownloadService selectSaveForDownloadService)
+        ISelectSaveForDownloadService selectSaveForDownloadService, IOpenSettingsService openSettingsService,
+        IServerStatusService serverStatusService, INoConnectionHandlerService noConnectionHandlerService)
     {
         _authenticationService = authenticationService;
         _saveSyncService = saveSyncService;
         _selectSaveForUploadService = selectSaveForUploadService;
         _selectSaveForDownloadService = selectSaveForDownloadService;
         _saveCatalogService = saveCatalogService;
+        _openSettingsService = openSettingsService;
+        _noConnectionHandlerService = noConnectionHandlerService;
+        _serverStatusService = serverStatusService;
         
         _authenticationService.UserChanged += OnUserChanged;
         _saveCatalogService.SavesChanged += SaveCatalogServiceOnSavesChanged;
         
         if (_authenticationService.CurrentUser is not null)
             Username = _authenticationService.CurrentUser.Username;
+
+        serverStatusService.ConnectionComplete += ServerStatusServiceOnConnectionError;
+    }
+
+    private void ServerStatusServiceOnConnectionError(object? sender, EventArgs e)
+    {
+        IsConnectedToServer = _serverStatusService.IsConnectedToServer;
+        if (!IsConnectedToServer)
+            _noConnectionHandlerService.CheckNoConnection();
     }
 
     private bool IsCurrentUser(string? username) => username == _authenticationService.CurrentUser?.Username;
@@ -75,8 +94,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void SaveCatalogServiceOnSavesChanged(object? sender, EventArgs e)
     {
-        CloudSaves = _saveCatalogService.CloudSaves.Select(s => new CloudSaveInfoViewModel { Name =  s.Name, SaveId = s.SaveId }).ToArray();
-
         SaveId? selectedId = SelectedLocalSave?.Id;
 
         List<LocalSaveInfoViewModel> freshList = _saveCatalogService.LocalSaves
@@ -193,6 +210,12 @@ public partial class MainWindowViewModel : ViewModelBase
         return _saveCatalogService.RefreshAsync(cancellationToken);
     }
 
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        _openSettingsService.OpenSettings();
+    }
+
     private Task SelectedLocalSaveOnActionButtonClicked(LocalSaveInfoViewModel vm, CancellationToken cancellationToken = default)
     {
         return vm.ActionButtonPressedActionType switch
@@ -201,7 +224,7 @@ public partial class MainWindowViewModel : ViewModelBase
             LocalSaveInfoViewModel.ActionType.UploadChanges => UploadChanges(vm, cancellationToken),
             LocalSaveInfoViewModel.ActionType.DownloadChanges => DownloadChanges(vm, cancellationToken),
             LocalSaveInfoViewModel.ActionType.TakeInUse => TakeInUse(vm, cancellationToken),
-            _ => throw new ArgumentOutOfRangeException(nameof(vm.ActionButtonPressedActionType), vm.ActionButtonPressedActionType, null)
+            _ => throw new ArgumentOutOfRangeException()
         };
     }
 
@@ -218,11 +241,11 @@ public partial class MainWindowViewModel : ViewModelBase
         vm.CurrentSubOperationIndeterminate = true;
 
         double index = 0;
-        LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index / 5, index++ / 5, "Building signatures...");
-        LocalSaveViewModelProgress sendSignaturesProgress = new(vm, index / 5, index++ / 5, "Sending signatures...");
-        LocalSaveViewModelProgress buildDeltasProgress = new(vm, index / 5, index++ / 5, "Server - Building deltas...");
-        LocalSaveViewModelProgress receiveDeltasProgress = new(vm, index / 5, index++ / 5, "Receiving deltas...");
-        LocalSaveViewModelProgress applyDeltasProgress = new(vm, index / 5, index++ / 5, "Applying deltas...");
+        LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index++ / 5, index / 5, "Building signatures...");
+        LocalSaveViewModelProgress sendSignaturesProgress = new(vm, index++ / 5, index / 5, "Sending signatures...");
+        LocalSaveViewModelProgress buildDeltasProgress = new(vm, index++ / 5, index / 5, "Server - Building deltas...");
+        LocalSaveViewModelProgress receiveDeltasProgress = new(vm, index++ / 5, index / 5, "Receiving deltas...");
+        LocalSaveViewModelProgress applyDeltasProgress = new(vm, index++ / 5, index / 5, "Applying deltas...");
 
         await _saveSyncService.DownloadCloudSaveChangesAsync(vm.Id, buildSignaturesProgress, sendSignaturesProgress,
             buildDeltasProgress, receiveDeltasProgress, applyDeltasProgress, cancellationToken);
@@ -238,11 +261,11 @@ public partial class MainWindowViewModel : ViewModelBase
         vm.CurrentSubOperationIndeterminate = true;
 
         double index = 0;
-        LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index / 5, index++ / 5, "Server - Building signatures...");
-        LocalSaveViewModelProgress receiveSignaturesProgress = new(vm, index / 5, index++ / 5, "Receiving signatures...");
-        LocalSaveViewModelProgress buildDeltasProgress = new(vm, index / 5, index++ / 5, "Building deltas...");
-        LocalSaveViewModelProgress sendDeltasProgress = new(vm, index / 5, index++ / 5, "Sending deltas...");
-        LocalSaveViewModelProgress applyDeltasProgress = new(vm, index / 5, index++ / 5, "Server - Applying deltas...");
+        LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index++ / 5, index / 5, "Server - Building signatures...");
+        LocalSaveViewModelProgress receiveSignaturesProgress = new(vm, index++ / 5, index / 5, "Receiving signatures...");
+        LocalSaveViewModelProgress buildDeltasProgress = new(vm, index++ / 5, index / 5, "Building deltas...");
+        LocalSaveViewModelProgress sendDeltasProgress = new(vm, index++ / 5, index / 5, "Sending deltas...");
+        LocalSaveViewModelProgress applyDeltasProgress = new(vm, index++ / 5, index / 5, "Server - Applying deltas...");
         
         await _saveSyncService.UploadLocalSaveChangesAsync(vm.Id, buildSignaturesProgress, receiveSignaturesProgress,
             buildDeltasProgress, sendDeltasProgress, applyDeltasProgress, cancellationToken);

@@ -27,7 +27,7 @@
 
     <Grid ColumnDefinitions="240,*">
         <Grid Grid.Column="0"
-              RowDefinitions="Auto,*"
+              RowDefinitions="Auto,Auto,*"
               Background="#202020">
             <TextBlock Grid.Row="0"
                        Text="{Binding Username}"
@@ -36,12 +36,30 @@
                        Margin="8"
                        FontWeight="SemiBold"/>
         
-            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" HorizontalAlignment="Right">
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto" HorizontalAlignment="Right">
                 <Button Grid.Column="0"
                         Height="32"
                         Width="32"
                         VerticalAlignment="Center"
-                        Command="{Binding RefreshCommand}">
+                        Margin="1 8"
+                        Command="{Binding OpenSettingsCommand}">
+                    <Viewbox Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path Data="M1703.534 960c0-41.788-3.84-84.48-11.633-127.172l210.184-182.174-199.454-340.856-265.186 88.433c-66.974-55.567-143.323-99.389-223.85-128.415L1158.932 0h-397.78L706.49 269.704c-81.43 29.138-156.423 72.282-223.962 128.414l-265.073-88.32L18 650.654l210.184 182.174C220.39 875.52 216.55 918.212 216.55 960s3.84 84.48 11.633 127.172L18 1269.346l199.454 340.856 265.186-88.433c66.974 55.567 143.322 99.389 223.85 128.415L761.152 1920h397.779l54.663-269.704c81.318-29.138 156.424-72.282 223.963-128.414l265.073 88.433 199.454-340.856-210.184-182.174c7.793-42.805 11.633-85.497 11.633-127.285m-743.492 395.294c-217.976 0-395.294-177.318-395.294-395.294 0-217.976 177.318-395.294 395.294-395.294 217.977 0 395.294 177.318 395.294 395.294 0 217.976-177.317 395.294-395.294 395.294"
+                              Stroke="{Binding $parent[Button].Foreground}"
+                              Fill="{Binding $parent[Button].Foreground}"
+                              StrokeThickness="4"
+                              StrokeJoin="Round"
+                              StrokeLineCap="Round"
+                              Margin="2"/>
+                    </Viewbox>
+                </Button>
+                <Button Grid.Column="1"
+                        Height="32"
+                        Width="32"
+                        Margin="1 8"
+                        VerticalAlignment="Center"
+                        Command="{Binding RefreshCommand}"
+                        IsEnabled="{Binding IsConnectedToServer}">
                     <Viewbox Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Path Data="M21 3V8M21 8H16M21 8L18 5.29168C16.4077 3.86656 14.3051 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C16.2832 21 19.8675 18.008 20.777 14"
                               Stroke="{Binding $parent[Button].Foreground}"
@@ -49,16 +67,18 @@
                               StrokeJoin="Round"
                               StrokeLineCap="Round"
                               Fill="Transparent"
-                              Margin="2"/>
+                              Margin="2">
+                        </Path>
                     </Viewbox>
                 </Button>
                 <DropDownButton
-                    Grid.Column="1"
+                    Grid.Column="2"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
                     Height="32"
-                    Margin="8"
-                    Content="Add">
+                    Margin="1 8"
+                    Content="Add"
+                    IsEnabled="{Binding IsConnectedToServer}">
                     <DropDownButton.Flyout>
                         <MenuFlyout Placement="BottomEdgeAlignedLeft">
                             <MenuItem CornerRadius="4 4 0 0" Margin="0 -4 0 0" Header="Add local save" Command="{Binding AddLocalSaveCommand}"/>
@@ -69,18 +89,20 @@
             </Grid>
             
             
-            <Border Grid.Row="1" CornerRadius="8" Background="#303030" Margin="8" ClipToBounds="True">
+            <Border Grid.Row="2" CornerRadius="8" Background="#303030" Margin="8" ClipToBounds="True">
                 <ListBox ItemsSource="{Binding LocalSaves}"
                          SelectedItem="{Binding SelectedLocalSave}"
-                         Background="#303030">
+                         Background="#303030"
+                         IsEnabled="{Binding IsConnectedToServer}">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:LocalSaveInfoViewModel">
-                            <Border CornerRadius="8">
+                            <StackPanel MaxHeight="16">
                                 <TextBlock Text="{Binding Name}"
                                            Classes="ServerStatus"
                                            Tag="{Binding ExistsOnServer}"/>
-                                
-                            </Border>
+                                <ProgressBar IsVisible="{Binding CurrentOperation, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                             Minimum="0" Maximum="1" Value="{Binding CurrentOperationProgress}"/>
+                            </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
@@ -89,7 +111,7 @@
         
         <Border Grid.Column="1"
                 Background="#202020"
-                Padding="8">
+                Padding="8" IsEnabled="{Binding IsConnectedToServer}">
             <Border Background="#303030" CornerRadius="8">
                 <Grid IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}"
                       DataContext="{Binding SelectedLocalSave}"

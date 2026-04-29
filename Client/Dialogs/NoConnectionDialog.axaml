@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="144"
+        Width="350" Height="144"
+        MinWidth="250" MinHeight="144"
+        x:Class="Client.Dialogs.NoConnectionDialog"
+        Title="Failed to connect to server">
+    <Grid RowDefinitions="Auto,*,Auto" Background="#303030">
+        <Border Grid.Row="0" Margin="8" CornerRadius="8" Background="#202020" ClipToBounds="True">
+            <TextBlock Margin="8" Name="Message" TextWrapping="WrapWithOverflow">Failed to connect to server, please check your internet connection and/or the server URI in the settings.</TextBlock>
+        </Border>
+        
+        <Border Grid.Row="2" Margin="8" CornerRadius="8" Background="#202020" ClipToBounds="True">
+            <Button Margin="8" Click="OkButton_OnClick" HorizontalAlignment="Right" Content="Ok"/>
+        </Border>
+    </Grid>
+</Window>

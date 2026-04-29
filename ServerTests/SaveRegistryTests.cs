@@ -11,7 +11,7 @@ public sealed class SaveRegistryTests : IDisposable
     {
         // Give this specific test run a unique folder
         _testPath = Path.Combine(Path.GetTempPath(), "ServerTests_" + Guid.NewGuid());
-        ServerSettings.SavePath = _testPath; 
+        ServerSettings.Instance.SavePath = _testPath;
         Directory.CreateDirectory(_testPath);
     }
 

@@ -1,0 +1,33 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="192"
+        x:Class="Client.Dialogs.InitialSetupWindow"
+        MinWidth="450" MinHeight="192"
+        Width="450" Height="192"
+        Title="Welcome!">
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Background="#303030">
+        <Border Grid.Row="0" Margin="8" CornerRadius="8" Background="#202020" ClipToBounds="True">
+            <TextBlock Margin="8">Welcome to Save Share! Please enter the Server's URI here.</TextBlock>
+        </Border>
+        
+        <Border Grid.Row="1" Margin="8" CornerRadius="8" Background="#202020" ClipToBounds="True">
+            <Grid ColumnDefinitions="Auto,*" Background="#202020">
+                <TextBlock Grid.Column="0" Margin="8 8 4 8" VerticalAlignment="Center">Server URI: </TextBlock>
+                <TextBox Grid.Column="1" Margin="4 8 8 8" Name="ServerUriTextBox" PlaceholderText="Enter server URI..."/>
+            </Grid>
+        </Border>
+        
+        <Border Grid.Row="3" Margin="8" CornerRadius="8" Background="#202020" ClipToBounds="True">
+            <TextBlock Margin="8" Foreground="Red" Name="ErrorTextBlock" IsVisible="False"/>
+        </Border>
+        
+        <Border Grid.Row="4" Margin="8" CornerRadius="8" Background="#202020" ClipToBounds="True">
+            <Grid ColumnDefinitions="Auto,*,Auto" Background="#202020">
+                <Button Grid.Column="0" Margin="8" Content="Quit" Name="CancelButton" Click="CancelButton_OnClick"></Button>
+                <Button Grid.Column="2" Margin="8" Content="Connect" Name="ConnectButton" Click="ConnectButton_OnClick"></Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
