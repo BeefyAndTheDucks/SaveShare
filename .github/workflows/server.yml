@@ -51,7 +51,6 @@ jobs:
           dotnet test --project ServerTests/ServerTests.csproj \
             --no-restore \
             --configuration Release \
-            --logger "console;verbosity=normal" \
             --results-directory test-results
           
       - name: Upload test results
