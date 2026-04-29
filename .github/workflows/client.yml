@@ -41,6 +41,7 @@ jobs:
       - name: Build & Publish
         run: |
           dotnet publish Client/Client.csproj \
+            --no-restore \
             --configuration Release \
             --runtime ${{ matrix.rid }} \
             --self-contained true \
