@@ -12,19 +12,21 @@ public static class DirectoryPacker
 {
     private const string k_SignatureFileExtension = ".octosig";
     private const string k_DeltaFileExtension = ".octodelta";
-    
-    private static string GetParentDirectory(string baseDirectory)
+
+    private static string GetTempPathOnVolume(string basePath)
     {
-        string directory = Path.GetDirectoryName(Path.GetFullPath(baseDirectory)) ?? throw new InvalidOperationException("Path must be a valid directory.");
-        DirectoryInfo parentDirInfo = Directory.GetParent(directory)!;
-        return parentDirInfo.FullName;
+        string? root = Path.GetPathRoot(basePath);
+        if (string.IsNullOrEmpty(root))
+            return basePath;
+        
+        return Path.Combine(root, ".saveshare_temp");
     }
     
-    private static string GetSignatureDirectory(string baseDirectory) => Path.Combine(GetParentDirectory(baseDirectory), $".signatures_{Guid.NewGuid()}");
-    private static string GetDeltasDirectory(string baseDirectory) => Path.Combine(GetParentDirectory(baseDirectory), $".deltas_{Guid.NewGuid()}");
-    private static string GetUpdatedFilesDirectory(string baseDirectory) => Path.Combine(GetParentDirectory(baseDirectory), $".updated_{Guid.NewGuid()}");
-    private static string GetUnpackDirectory(string baseDirectory) => Path.Combine(GetParentDirectory(baseDirectory), $".unpack_{Guid.NewGuid()}");
-    private static string GetBackupDirectory(string baseDirectory) => Path.Combine(GetParentDirectory(baseDirectory), $".backup_{Guid.NewGuid()}");
+    private static string GetSignatureDirectory(string basePath) => Path.Combine(GetTempPathOnVolume(basePath), $"signatures_{Guid.NewGuid()}");
+    private static string GetDeltasDirectory(string basePath) => Path.Combine(GetTempPathOnVolume(basePath), $"deltas_{Guid.NewGuid()}");
+    private static string GetUpdatedFilesDirectory(string basePath) => Path.Combine(GetTempPathOnVolume(basePath), $"updated_{Guid.NewGuid()}");
+    private static string GetUnpackDirectory(string basePath) => Path.Combine(GetTempPathOnVolume(basePath), $"unpack_{Guid.NewGuid()}");
+    private static string GetBackupDirectory(string basePath) => Path.Combine(GetTempPathOnVolume(basePath), $"backup_{Guid.NewGuid()}");
 
     private static void SafeDeleteDirectory(string path)
     {
