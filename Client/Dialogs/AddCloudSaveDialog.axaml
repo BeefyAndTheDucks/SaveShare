@@ -20,17 +20,21 @@
                 <TextBlock Grid.Row="1" Margin="8 -4 8 8" Foreground="#B0B0B0" Name="DownloadTargetInfo" IsVisible="False"></TextBlock>
             </Grid>
         </Border>
-        <Border Grid.Row="1" Background="#202020" CornerRadius="8" Margin="8" Padding="-4 0" ClipToBounds="True">
-            <ListBox ItemsSource="{Binding CloudSaves}"
-                     SelectionChanged="SelectingItemsControl_OnSelectionChanged"
-                     Name="CloudSavesList"
-                     Background="#202020">
-                <ListBox.ItemTemplate>
-                    <DataTemplate x:DataType="vm:CloudSaveInfoViewModel">
-                        <TextBlock Text="{Binding Name}"/>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+        <Border Grid.Row="1" Background="#202020" CornerRadius="8" Margin="8" ClipToBounds="True">
+            <StackPanel>
+                <TextBlock Margin="8" HorizontalAlignment="Center" FontWeight="Bold">Available saves:</TextBlock>
+                <Separator/>
+                <ListBox ItemsSource="{Binding CloudSaves}"
+                         SelectionChanged="SelectingItemsControl_OnSelectionChanged"
+                         Name="CloudSavesList"
+                         Background="#202020">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CloudSaveInfoViewModel">
+                            <TextBlock Text="{Binding Name}"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
         </Border>
         
         <Border Grid.Row="2" Background="#202020" CornerRadius="8" Margin="8" ClipToBounds="True" IsVisible="False" Name="ErrorTextParent">
