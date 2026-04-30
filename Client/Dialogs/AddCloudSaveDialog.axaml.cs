@@ -50,7 +50,9 @@ public partial class AddCloudSaveDialog : Window
         LocalSaveInfo[] localSaves = _saveCatalogService.LocalSaves;
         
         CloudSaves.Clear();
-        foreach (SaveInfo save in _saveCatalogService.CloudSaves.Where(save => localSaves.All(localSave => localSave.SaveId != save.SaveId)))
+        foreach (SaveInfo save in _saveCatalogService.CloudSaves
+                     .Where(save => localSaves.All(localSave => localSave.SaveId != save.SaveId))
+                     .Where(save => string.IsNullOrEmpty(save.CheckedOutByUserName)))
             CloudSaves.Add(new CloudSaveInfoViewModel { Name = save.Name, SaveId = save.SaveId });
     }
 
