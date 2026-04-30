@@ -55,8 +55,8 @@ public static class DirectoryPacker
     
     public static async Task UnpackDirectoryAsync(Stream input, string path, string? basePath = null, CancellationToken ct = default)
     {
-        string tempUnpackPath = GetUnpackDirectory(path);
-        string backupPath = GetBackupDirectory(path);
+        string tempUnpackPath = GetUnpackDirectory(basePath ?? path);
+        string backupPath = GetBackupDirectory(basePath ?? path);
         
         Directory.CreateDirectory(tempUnpackPath);
 
