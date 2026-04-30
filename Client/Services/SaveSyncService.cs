@@ -45,7 +45,7 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
         
         await serverSession.DownloadSaveAsync(saveId, async (stream, ct) =>
         {
-            await DirectoryPacker.UnpackDirectoryAsync(stream, targetPath, ct);
+            await DirectoryPacker.UnpackDirectoryAsync(stream, targetPath, ct: ct);
         }, byteCount => ByteProgressToNormalizedProgress.From(progress, byteCount), cancellationToken);
         
         await saveCatalogService.RefreshAsync(cancellationToken);

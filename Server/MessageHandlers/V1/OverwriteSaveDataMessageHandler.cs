@@ -18,7 +18,7 @@ public class OverwriteSaveDataMessageHandler : MessageHandler<C2SOverwriteSaveDa
         if (!Directory.Exists(path)) Directory.CreateDirectory(path);
         await MessageHelpers.SendMessage(new S2CReadyForBinaryDataMessage(), webSocket, cancellationToken);
         await using Stream stream = WebSocketStream.Create(webSocket, WebSocketMessageType.Binary);
-        await DirectoryPacker.UnpackDirectoryAsync(stream, path, cancellationToken);
+        await DirectoryPacker.UnpackDirectoryAsync(stream, path, ct: cancellationToken);
         await MessageHelpers.SendMessage(new S2CSuccessMessage("Successfully overwrote the old save data (if any)"), webSocket, cancellationToken);
         
         Result updateResult = await SaveRegistry.UpdateSaveInfo(message.SaveId, info =>

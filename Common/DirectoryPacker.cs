@@ -53,7 +53,7 @@ public static class DirectoryPacker
         await writer.WriteAllAsync(path, "*", SearchOption.AllDirectories, ct);
     }
     
-    public static async Task UnpackDirectoryAsync(Stream input, string path, CancellationToken ct = default)
+    public static async Task UnpackDirectoryAsync(Stream input, string path, string? basePath = null, CancellationToken ct = default)
     {
         string tempUnpackPath = GetUnpackDirectory(path);
         string backupPath = GetBackupDirectory(path);
@@ -137,7 +137,7 @@ public static class DirectoryPacker
 
         try
         {
-            await UnpackDirectoryAsync(signaturesInput, signaturesPath, ct);
+            await UnpackDirectoryAsync(signaturesInput, signaturesPath, updatedFilesPath, ct);
 
             string[] updatedFiles = Directory.GetFiles(updatedFilesPath, "*", SearchOption.AllDirectories);
             DeltaBuilder deltaBuilder = new();
@@ -209,7 +209,7 @@ public static class DirectoryPacker
 
         try
         {
-            await UnpackDirectoryAsync(deltasInput, deltasPath, ct);
+            await UnpackDirectoryAsync(deltasInput, deltasPath, oldFilesPath, ct);
             
             string[] deltaFiles = Directory.GetFiles(deltasPath, "*", SearchOption.AllDirectories);
             for (int i = 0; i < deltaFiles.Length; i++)
