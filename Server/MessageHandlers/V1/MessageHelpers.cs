@@ -123,7 +123,7 @@ public static class MessageHelpers
         try
         {
             string json = JsonConvert.SerializeObject(message);
-            await WebSocketUtils.SendString(ws, json, ct);
+            await ws.SendAsync(Encoding.UTF8.GetBytes(json), WebSocketMessageType.Text, true, ct);
         }
         finally
         {

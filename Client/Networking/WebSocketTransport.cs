@@ -45,7 +45,8 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
         await _sendLock.WaitAsync(cancellationToken);
         try
         {
-            await WebSocketUtils.SendString(WebSocket!, json, cancellationToken);
+            await WebSocket!.SendAsync(Encoding.UTF8.GetBytes(json), WebSocketMessageType.Text, true,
+                cancellationToken);
         }
         finally
         {
