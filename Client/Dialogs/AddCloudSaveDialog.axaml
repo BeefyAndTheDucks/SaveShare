@@ -24,6 +24,10 @@
             <StackPanel>
                 <TextBlock Margin="8" HorizontalAlignment="Center" FontWeight="Bold">Available saves:</TextBlock>
                 <Separator/>
+                <TextBlock IsVisible="{Binding !CloudSaves.Count}"
+                           Foreground="DarkGray"
+                           HorizontalAlignment="Center"
+                           Text="No saves available."/>
                 <ListBox ItemsSource="{Binding CloudSaves}"
                          SelectionChanged="SelectingItemsControl_OnSelectionChanged"
                          Name="CloudSavesList"
