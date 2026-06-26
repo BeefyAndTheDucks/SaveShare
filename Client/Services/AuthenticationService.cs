@@ -23,23 +23,18 @@ public class AuthenticationService(IServerSession serverSession, IUserStore user
             S2CSuccessfullySignedInMessage signedIn =
                 await serverSession.SignInAsExistingUserAsync(storedUser.Id, cancellationToken);
 
-            CurrentUser = new User(storedUser.Id, signedIn.UserName);
+            CurrentUser = storedUser with { Username = signedIn.UserName };
             UserChanged?.Invoke(this, CurrentUser);
 
             await userStore.SaveAsync(CurrentUser, cancellationToken);
             return CurrentUser;
         }
-        catch (ServerErrorException)
+        catch (ServerErrorException e)
         {
-            await userStore.ClearAsync(cancellationToken);
+            if (e.Error.Code == ErrorCode.FailedToAuthenticate)
+                await userStore.ClearAsync(cancellationToken);
             return null;
         }
-        
-        /*Guid userId = Guid.Parse("da70178d-bf2d-4be6-b11d-979616f981aa");
-        S2CSuccessfullySignedInMessage signedInMessage = await serverSession.SignInAsExistingUserAsync(userId, cancellationToken);
-        CurrentUser = new User(userId, signedInMessage.UserName);
-        UserChanged?.Invoke(this, CurrentUser);
-        return CurrentUser;*/
     }
 
     public async Task<User?> CreateNewUserAsync(string userName, CancellationToken cancellationToken = default)
