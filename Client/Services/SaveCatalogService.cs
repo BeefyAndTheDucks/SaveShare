@@ -71,6 +71,7 @@ public class SaveCatalogService : ISaveCatalogService
     public async Task DeleteLocalSave(SaveId saveId, CancellationToken cancellationToken = default)
     {
         await _localSavesStore.RemoveAsync(saveId, cancellationToken);
+        await _serverSession.ReleaseAsync(saveId, cancellationToken);
         SavesChanged?.Invoke(this, EventArgs.Empty);
     }
 

@@ -2,5 +2,5 @@ namespace Common;
 
 public static class TaskExtensions
 {
-    public static void Forget(this Task task) {}
+    public static void Forget(this Task _) {}
 }
