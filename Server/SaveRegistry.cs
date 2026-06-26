@@ -25,9 +25,15 @@ public static class SaveRegistry
             return Result<SaveInfo>.Failure("Save metadata not found.");
 
         await FileOperationSemaphore.WaitAsync(cancellationToken);
-        string json = await File.ReadAllTextAsync(metadataFilePath, cancellationToken);
-        FileOperationSemaphore.Release();
-        return SaveInfo.Deserialize(json);
+        try
+        {
+            string json = await File.ReadAllTextAsync(metadataFilePath, cancellationToken);
+            return SaveInfo.Deserialize(json);
+        }
+        finally
+        {
+            FileOperationSemaphore.Release();
+        }
     }
 
     public static async Task<Result> CreateSave(SaveInfo saveInfo, CancellationToken cancellationToken = default)
@@ -37,9 +43,15 @@ public static class SaveRegistry
             return Result.Failure($"Save metadata already exists, to overwrite use {nameof(UpdateSaveInfo)}.");
         
         await FileOperationSemaphore.WaitAsync(cancellationToken);
-        await File.WriteAllTextAsync(metadataFilePath, saveInfo.Serialize(), cancellationToken);
-        FileOperationSemaphore.Release();
-        return Result.Success();
+        try
+        {
+            await File.WriteAllTextAsync(metadataFilePath, saveInfo.Serialize(), cancellationToken);
+            return Result.Success();
+        }
+        finally
+        {
+            FileOperationSemaphore.Release();
+        }
     }
 
     public static async Task<Result<SaveId>> CreateSave(CancellationToken cancellationToken = default)
@@ -58,9 +70,15 @@ public static class SaveRegistry
             return Result.Failure($"Save metadata doesn't already exist, to create a new one use {nameof(CreateSave)}.");
 
         await FileOperationSemaphore.WaitAsync(cancellationToken);
-        await File.WriteAllTextAsync(metadataFilePath, saveInfo.Serialize(), cancellationToken);
-        FileOperationSemaphore.Release();
-        return Result.Success();
+        try
+        {
+            await File.WriteAllTextAsync(metadataFilePath, saveInfo.Serialize(), cancellationToken);
+            return Result.Success();
+        }
+        finally
+        {
+            FileOperationSemaphore.Release();
+        }
     }
 
     public static async Task<Result> UpdateSaveInfo(SaveId saveId, Func<SaveInfo, SaveInfo> updateMethod, CancellationToken cancellationToken = default)
@@ -81,9 +99,15 @@ public static class SaveRegistry
             return Result.Failure("Save metadata not found.");
 
         await FileOperationSemaphore.WaitAsync(cancellationToken);
-        File.Delete(metadataFilePath);
-        FileOperationSemaphore.Release();
-        return Result.Success();
+        try
+        {
+            File.Delete(metadataFilePath);
+            return Result.Success();
+        }
+        finally
+        {
+            FileOperationSemaphore.Release();
+        }
     }
 
     public static async Task<Result> DeleteSave(SaveInfo save, CancellationToken cancellationToken = default) => await DeleteSave(save.SaveId, cancellationToken);
@@ -103,70 +127,95 @@ public static class SaveRegistry
     {
         bool succeeded = false;
         await LockUnlockOperationSemaphore.WaitAsync(cancellationToken);
-        Result updateResult = await UpdateSaveInfo(saveId, info =>
+        try
         {
-            if (string.IsNullOrEmpty(info.CheckedOutByUserName) || info.CheckedOutByUserName == userName)
+            Result updateResult = await UpdateSaveInfo(saveId, info =>
             {
-                succeeded = true;
-                info.CheckedOutByUserName = userName;
-                info.CheckedOutAt = DateTime.Now;
-            }
+                if (string.IsNullOrEmpty(info.CheckedOutByUserName) || info.CheckedOutByUserName == userName)
+                {
+                    succeeded = true;
+                    info.CheckedOutByUserName = userName;
+                    info.CheckedOutAt = DateTime.Now;
+                }
 
-            return info;
-        }, cancellationToken);
-        LockUnlockOperationSemaphore.Release();
+                return info;
+            }, cancellationToken);
         
-        if (!updateResult.Succeeded)
-            return updateResult;
+            if (!updateResult.Succeeded)
+                return updateResult;
         
-        return Result.FromFlag(succeeded, "Someone else has checked out this save.");
+            return Result.FromFlag(succeeded, "Someone else has checked out this save.");
+        }
+        finally
+        {
+            LockUnlockOperationSemaphore.Release();
+        }
     }
 
     public static async Task<Result<bool>> HasCheckout(SaveId saveId, string userName,
         CancellationToken cancellationToken = default)
     {
         await LockUnlockOperationSemaphore.WaitAsync(cancellationToken);
-        Result<SaveInfo> getSaveInfoResult = await GetSaveInfo(saveId, cancellationToken);
-        LockUnlockOperationSemaphore.Release();
+        try
+        {
+            Result<SaveInfo> getSaveInfoResult = await GetSaveInfo(saveId, cancellationToken);
         
-        if (!getSaveInfoResult.Succeeded)
-            return Result<bool>.Failure(getSaveInfoResult.Error);
-        return getSaveInfoResult.Value.CheckedOutByUserName == userName;
+            if (!getSaveInfoResult.Succeeded)
+                return Result<bool>.Failure(getSaveInfoResult.Error);
+            return getSaveInfoResult.Value.CheckedOutByUserName == userName;
+        }
+        finally
+        {
+            LockUnlockOperationSemaphore.Release();
+        }
     }
 
     public static async Task<Result> Release(SaveId saveId, string userName, CancellationToken cancellationToken = default)
     {
         bool succeeded = false;
         await LockUnlockOperationSemaphore.WaitAsync(cancellationToken);
-        Result updateResult = await UpdateSaveInfo(saveId, info =>
+        try
         {
-            if (info.CheckedOutByUserName == userName || string.IsNullOrEmpty(info.CheckedOutByUserName))
+            Result updateResult = await UpdateSaveInfo(saveId, info =>
             {
-                succeeded = true;
-                info.CheckedOutByUserName = "";
-            }
+                if (info.CheckedOutByUserName == userName || string.IsNullOrEmpty(info.CheckedOutByUserName))
+                {
+                    succeeded = true;
+                    info.CheckedOutByUserName = "";
+                }
 
-            return info;
-        }, cancellationToken);
-        LockUnlockOperationSemaphore.Release();
-        
-        if (!updateResult.Succeeded)
-            return updateResult;
-        
-        return Result.FromFlag(succeeded, "You haven't checked out this save.");
+                return info;
+            }, cancellationToken);
+
+            if (!updateResult.Succeeded)
+                return updateResult;
+
+            return Result.FromFlag(succeeded, "You haven't checked out this save.");
+        }
+        finally
+        {
+            LockUnlockOperationSemaphore.Release();
+        }
     }
 
     public static async Task<Result> ForceRelease(SaveId saveId, CancellationToken cancellationToken = default)
     {
         await LockUnlockOperationSemaphore.WaitAsync(cancellationToken);
-        Result result = await UpdateSaveInfo(saveId, info =>
+        try
         {
-            info.CheckedOutByUserName = "";
+            Result result = await UpdateSaveInfo(saveId, info =>
+            {
+                info.CheckedOutByUserName = "";
 
-            return info;
-        }, cancellationToken);
-        LockUnlockOperationSemaphore.Release();
-        return result;
+                return info;
+            }, cancellationToken);
+
+            return result;
+        }
+        finally
+        {
+            LockUnlockOperationSemaphore.Release();
+        }
     }
     
     public static SaveId[] GetSaveIds()

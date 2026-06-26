@@ -1,4 +1,3 @@
-using System.Text;
 using Common;
 using Newtonsoft.Json;
 
@@ -10,7 +9,7 @@ public static class UserRegistry
 
     private const string k_UserRegistryFilepath = "users.json";
 
-    private static async Task<string> GetUserRegistryFile(CancellationToken cancellationToken = default)
+    private static async Task<string> GetUserRegistryFile()
     {
         if (File.Exists(k_UserRegistryFilepath)) return k_UserRegistryFilepath;
         
@@ -22,49 +21,51 @@ public static class UserRegistry
     public static async Task<Result<User>> CreateUser(string userName, CancellationToken cancellationToken = default)
     {
         await FileOperationSemaphore.WaitAsync(cancellationToken);
-        
-        string userRegistryFile = await GetUserRegistryFile(cancellationToken);
-        string userRegistryJson = await File.ReadAllTextAsync(userRegistryFile, cancellationToken);
-        User[] userRegistry = JsonConvert.DeserializeObject<User[]>(userRegistryJson) ?? [];
 
-        if (userRegistry.Any(u => u.Username == userName))
+        try
+        {
+            string userRegistryFile = await GetUserRegistryFile();
+            string userRegistryJson = await File.ReadAllTextAsync(userRegistryFile, cancellationToken);
+            User[] userRegistry = JsonConvert.DeserializeObject<User[]>(userRegistryJson) ?? [];
+
+            if (userRegistry.Any(u => u.Username == userName))
+                return Result<User>.Failure("A user with that name already exists.");
+
+            User newUser = new(Guid.NewGuid(), userName);
+            userRegistry = userRegistry.Append(newUser).ToArray();
+            await File.WriteAllTextAsync(userRegistryFile, JsonConvert.SerializeObject(userRegistry),
+                cancellationToken);
+
+            return newUser;
+        }
+        finally
         {
             FileOperationSemaphore.Release();
-            return Result<User>.Failure("A user with that name already exists.");
         }
-        
-        User newUser = new(Guid.NewGuid(), userName);
-        userRegistry = userRegistry.Append(newUser).ToArray();
-        await File.WriteAllTextAsync(userRegistryFile, JsonConvert.SerializeObject(userRegistry), cancellationToken);
-        
-        FileOperationSemaphore.Release();
-        
-        return newUser;
     }
     
     public static async Task<Result<User>> GetUser(Guid userId, CancellationToken cancellationToken = default)
     {
         await FileOperationSemaphore.WaitAsync(cancellationToken);
-        
-        string userRegistryFile = await GetUserRegistryFile(cancellationToken);
-        string userRegistryJson = await File.ReadAllTextAsync(userRegistryFile, cancellationToken);
-        User[]? userRegistry = JsonConvert.DeserializeObject<User[]>(userRegistryJson);
-        if (userRegistry is null)
+
+        try
+        {
+            string userRegistryFile = await GetUserRegistryFile();
+            string userRegistryJson = await File.ReadAllTextAsync(userRegistryFile, cancellationToken);
+            User[]? userRegistry = JsonConvert.DeserializeObject<User[]>(userRegistryJson);
+            if (userRegistry is null)
+                return Result<User>.Failure("User not found");
+
+            User? user = userRegistry.FirstOrDefault(u => u.Id == userId);
+
+            if (user is null)
+                return Result<User>.Failure("User not found");
+
+            return user;
+        }
+        finally
         {
             FileOperationSemaphore.Release();
-            return Result<User>.Failure("User not found");
         }
-
-        User? user = userRegistry.FirstOrDefault(u => u.Id == userId);
-        
-        if (user is null)
-        {
-            FileOperationSemaphore.Release();
-            return Result<User>.Failure("User not found");
-        }
-        
-        FileOperationSemaphore.Release();
-
-        return user;
     }
 }

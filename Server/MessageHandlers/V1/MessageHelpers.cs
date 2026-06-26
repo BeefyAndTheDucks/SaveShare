@@ -47,7 +47,7 @@ public static class MessageHelpers
     private static readonly IReadOnlyDictionary<C2SMessageType, Type> ClientMessageTypes =
         MessageTypeHelpers.BuildMessageTypeMap<C2SMessage, C2SMessageTypeAttribute, C2SMessageType>(attr => attr.Type);
     
-    private static SemaphoreSlim _sendSemaphore = new(1, 1);
+    private static readonly SemaphoreSlim SendSemaphore = new(1, 1);
     
     private static C2SMessageType ReadClientMessageType(JObject obj)
     {
@@ -119,7 +119,7 @@ public static class MessageHelpers
 
     public static async Task SendMessage(S2CMessage message, WebSocket ws, CancellationToken ct = default)
     {
-        await _sendSemaphore.WaitAsync(ct);
+        await SendSemaphore.WaitAsync(ct);
         try
         {
             string json = JsonConvert.SerializeObject(message);
@@ -127,7 +127,7 @@ public static class MessageHelpers
         }
         finally
         {
-            _sendSemaphore.Release();
+            SendSemaphore.Release();
         }
     }
 

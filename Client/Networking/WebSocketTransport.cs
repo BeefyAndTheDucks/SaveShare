@@ -43,8 +43,15 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
         
         string json = messageCodec.Serialize(message);
         await _sendLock.WaitAsync(cancellationToken);
-        await WebSocket!.SendAsync(Encoding.UTF8.GetBytes(json), WebSocketMessageType.Text, true, cancellationToken);
-        _sendLock.Release();
+        try
+        {
+            await WebSocket!.SendAsync(Encoding.UTF8.GetBytes(json), WebSocketMessageType.Text, true,
+                cancellationToken);
+        }
+        finally
+        {
+            _sendLock.Release();
+        }
     }
 
     public async Task<S2CMessage> ReceiveMessageAsync(CancellationToken cancellationToken = default)
@@ -53,9 +60,15 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
             throw new InvalidOperationException("Not connected.");
 
         await _receiveLock.WaitAsync(cancellationToken);
-        string json = await WebSocketUtils.ReceiveString(WebSocket!, cancellationToken);
-        _receiveLock.Release();
-        return messageCodec.Deserialize(json);
+        try
+        {
+            string json = await WebSocketUtils.ReceiveString(WebSocket!, cancellationToken);
+            return messageCodec.Deserialize(json);
+        }
+        finally
+        {
+            _receiveLock.Release();
+        }
     }
 
     public async Task SendBinaryAsync(Func<Stream, CancellationToken, Task> writeAsync, IProgress<long>? bytesSent = null, CancellationToken cancellationToken = default)
