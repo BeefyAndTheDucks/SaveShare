@@ -90,22 +90,29 @@
             
             
             <Border Grid.Row="2" CornerRadius="8" Background="#303030" Margin="8" ClipToBounds="True">
-                <ListBox ItemsSource="{Binding LocalSaves}"
-                         SelectedItem="{Binding SelectedLocalSave}"
-                         Background="#303030"
-                         IsEnabled="{Binding IsConnectedToServer}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="vm:LocalSaveInfoViewModel">
-                            <StackPanel MaxHeight="16">
-                                <TextBlock Text="{Binding Name}"
-                                           Classes="ServerStatus"
-                                           Tag="{Binding ExistsOnServer}"/>
-                                <ProgressBar IsVisible="{Binding CurrentOperation, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                             Minimum="0" Maximum="1" Value="{Binding CurrentOperationProgress}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                <StackPanel>
+                    <TextBlock IsVisible="{Binding !LocalSaves.Length}"
+                               Foreground="DarkGray"
+                               HorizontalAlignment="Center"
+                               Text="No saves on this machine."
+                               Margin="16"/>
+                    <ListBox ItemsSource="{Binding LocalSaves}"
+                             SelectedItem="{Binding SelectedLocalSave}"
+                             Background="#303030"
+                             IsEnabled="{Binding IsConnectedToServer}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:LocalSaveInfoViewModel">
+                                <StackPanel MaxHeight="16">
+                                    <TextBlock Text="{Binding Name}"
+                                               Classes="ServerStatus"
+                                               Tag="{Binding ExistsOnServer}"/>
+                                    <ProgressBar IsVisible="{Binding CurrentOperation, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                 Minimum="0" Maximum="1" Value="{Binding CurrentOperationProgress}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
             </Border>
         </Grid>
         
@@ -113,99 +120,109 @@
                 Background="#202020"
                 Padding="8" IsEnabled="{Binding IsConnectedToServer}">
             <Border Background="#303030" CornerRadius="8">
-                <Grid IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}"
-                      DataContext="{Binding SelectedLocalSave}"
-                      IsEnabled="{Binding CurrentOperation, Converter={x:Static ObjectConverters.IsNull}}"
-                      RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*">
-                    <Grid Grid.Row="0">
-                        <TextBlock Text="{Binding Name}"
-                                   Margin="16"
-                                   HorizontalAlignment="Left"
-                                   VerticalAlignment="Center"
-                                   FontSize="36"
-                                   FontWeight="Bold"/>
-                        
-                        <StackPanel Margin="16"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Top">
+                <Grid>
+                    <TextBlock IsVisible="{Binding SelectedLocalSave, Converter={x:Static ObjectConverters.IsNull}}"
+                               Foreground="DarkGray"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               TextAlignment="Center">
+                        No save selected.<LineBreak/>
+                        Please select a save on the left side, or add a new one.
+                    </TextBlock>
+                    <Grid IsVisible="{Binding $self.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}"
+                          DataContext="{Binding SelectedLocalSave}"
+                          IsEnabled="{Binding CurrentOperation, Converter={x:Static ObjectConverters.IsNull}}"
+                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*">
+                        <Grid Grid.Row="0">
+                            <TextBlock Text="{Binding Name}"
+                                       Margin="16"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       FontSize="36"
+                                       FontWeight="Bold"/>
                             
-                            <Button Content="Delete"
-                                    Padding="8 4"
-                                    Margin="2"
-                                    HorizontalAlignment="Right"
-                                    Command="{Binding DeleteCommand}"/>
+                            <StackPanel Margin="16"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top">
+                                
+                                <Button Content="Delete"
+                                        Padding="8 4"
+                                        Margin="2"
+                                        HorizontalAlignment="Right"
+                                        Command="{Binding DeleteCommand}"/>
+                            
+                                <Button Content="Browse"
+                                        Padding="8 4"
+                                        Margin="2"
+                                        HorizontalAlignment="Right"
+                                        Command="{Binding BrowseCommand}"/>
+                            </StackPanel>
+                        </Grid>
                         
-                            <Button Content="Browse"
-                                    Padding="8 4"
-                                    Margin="2"
-                                    HorizontalAlignment="Right"
-                                    Command="{Binding BrowseCommand}"/>
-                        </StackPanel>
+                        <TextBlock Grid.Row="1"
+                                   IsVisible="{Binding ExistsOnServer, Converter={x:Static BoolConverters.Not}}"
+                                   Margin="16" Foreground="Red" FontStyle="Italic" Text="This save doesn't exist on the server anymore."/>
+                        
+                        <ProgressBar Grid.Row="2"
+                                     Height="20" Minimum="0" Maximum="1" ShowProgressText="True" Margin="8 8 8 4"
+                                     Value="{Binding CurrentOperationProgress}"
+                                     IsVisible="{Binding CurrentOperation, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <ProgressBar.ProgressTextFormat>
+                                <MultiBinding StringFormat="{}{0} ({1:P0})">
+                                    <Binding Path="CurrentOperation"/>
+                                    <Binding Path="CurrentOperationProgress"/>
+                                </MultiBinding>
+                            </ProgressBar.ProgressTextFormat>
+                        </ProgressBar>
+                        
+                        <ProgressBar Grid.Row="3"
+                                     Height="20" Minimum="0" Maximum="1" ShowProgressText="True" Margin="8 4 8 8"
+                                     Value="{Binding CurrentSubOperationProgress}"
+                                     IsIndeterminate="{Binding CurrentSubOperationIndeterminate}"
+                                     IsVisible="{Binding CurrentSubOperation, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <ProgressBar.Styles>
+                                <Style Selector="ProgressBar">
+                                    <Setter Property="ProgressTextFormat">
+                                        <Setter.Value>
+                                            <MultiBinding StringFormat="{}{0} ({1:P0})">
+                                                <Binding Path="CurrentSubOperation"/>
+                                                <Binding Path="CurrentSubOperationProgress"/>
+                                            </MultiBinding>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                                
+                                <Style Selector="ProgressBar[IsIndeterminate=True]">
+                                    <Setter Property="ProgressTextFormat" Value="{Binding CurrentSubOperation}"></Setter>
+                                </Style>
+                            </ProgressBar.Styles>
+                        </ProgressBar>
+                        
+                        <TextBlock Grid.Row="4"
+                                   IsVisible="{Binding InUseBy, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                   Margin="16 0">
+                            <Run Text="In use by"/>
+                            <Run Text="{Binding InUseBy}" FontWeight="SemiBold"/>
+                        </TextBlock>
+                        
+                        <TextBlock Grid.Row="5"
+                                   IsVisible="{Binding LastChangedBy, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                   Margin="16 0">
+                            <Run Text="Last changed by"/>
+                            <Run Text="{Binding LastChangedBy}" FontWeight="SemiBold"/>
+                            <Run Text="at"/>
+                            <Run Text="{Binding LastChangedAt}" FontWeight="SemiBold"/>
+                        </TextBlock>
+                        
+                        <Button Grid.Row="6"
+                                VerticalAlignment="Bottom"
+                                HorizontalAlignment="Stretch"
+                                Margin="8"
+                                HorizontalContentAlignment="Center"
+                                Content="{Binding ActionButtonAction}"
+                                IsVisible="{Binding ActionButtonAction, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                Command="{Binding ActionButtonPressedCommand}"/>
                     </Grid>
-                    
-                    <TextBlock Grid.Row="1"
-                               IsVisible="{Binding ExistsOnServer, Converter={x:Static BoolConverters.Not}}"
-                               Margin="16" Foreground="Red" FontStyle="Italic" Text="This save doesn't exist on the server anymore."/>
-                    
-                    <ProgressBar Grid.Row="2"
-                                 Height="20" Minimum="0" Maximum="1" ShowProgressText="True" Margin="8 8 8 4"
-                                 Value="{Binding CurrentOperationProgress}"
-                                 IsVisible="{Binding CurrentOperation, Converter={x:Static ObjectConverters.IsNotNull}}">
-                        <ProgressBar.ProgressTextFormat>
-                            <MultiBinding StringFormat="{}{0} ({1:P0})">
-                                <Binding Path="CurrentOperation"/>
-                                <Binding Path="CurrentOperationProgress"/>
-                            </MultiBinding>
-                        </ProgressBar.ProgressTextFormat>
-                    </ProgressBar>
-                    
-                    <ProgressBar Grid.Row="3"
-                                 Height="20" Minimum="0" Maximum="1" ShowProgressText="True" Margin="8 4 8 8"
-                                 Value="{Binding CurrentSubOperationProgress}"
-                                 IsIndeterminate="{Binding CurrentSubOperationIndeterminate}"
-                                 IsVisible="{Binding CurrentSubOperation, Converter={x:Static ObjectConverters.IsNotNull}}">
-                        <ProgressBar.Styles>
-                            <Style Selector="ProgressBar">
-                                <Setter Property="ProgressTextFormat">
-                                    <Setter.Value>
-                                        <MultiBinding StringFormat="{}{0} ({1:P0})">
-                                            <Binding Path="CurrentSubOperation"/>
-                                            <Binding Path="CurrentSubOperationProgress"/>
-                                        </MultiBinding>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                            
-                            <Style Selector="ProgressBar[IsIndeterminate=True]">
-                                <Setter Property="ProgressTextFormat" Value="{Binding CurrentSubOperation}"></Setter>
-                            </Style>
-                        </ProgressBar.Styles>
-                    </ProgressBar>
-                    
-                    <TextBlock Grid.Row="4"
-                               IsVisible="{Binding InUseBy, Converter={x:Static ObjectConverters.IsNotNull}}"
-                               Margin="16 0">
-                        <Run Text="In use by"/>
-                        <Run Text="{Binding InUseBy}" FontWeight="SemiBold"/>
-                    </TextBlock>
-                    
-                    <TextBlock Grid.Row="5"
-                               IsVisible="{Binding LastChangedBy, Converter={x:Static ObjectConverters.IsNotNull}}"
-                               Margin="16 0">
-                        <Run Text="Last changed by"/>
-                        <Run Text="{Binding LastChangedBy}" FontWeight="SemiBold"/>
-                        <Run Text="at"/>
-                        <Run Text="{Binding LastChangedAt}" FontWeight="SemiBold"/>
-                    </TextBlock>
-                    
-                    <Button Grid.Row="6"
-                            VerticalAlignment="Bottom"
-                            HorizontalAlignment="Stretch"
-                            Margin="8"
-                            HorizontalContentAlignment="Center"
-                            Content="{Binding ActionButtonAction}"
-                            IsVisible="{Binding ActionButtonAction, Converter={x:Static ObjectConverters.IsNotNull}}"
-                            Command="{Binding ActionButtonPressedCommand}"/>
                 </Grid>
             </Border>
         </Border>
