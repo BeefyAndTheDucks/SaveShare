@@ -36,10 +36,10 @@ jobs:
             
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with: 
           dotnet-version: '10.0.x'
           
@@ -60,7 +60,7 @@ jobs:
           
       - name: Upload test results
         if: matrix.rid == 'win-x64' && (success() || failure())
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: test-results
@@ -68,7 +68,7 @@ jobs:
           
       - name: Test Report
         if: matrix.rid == 'win-x64' && (success() || failure())
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3
         with:
           name: xUnit Tests
           path: test-results/*.trx
@@ -86,7 +86,7 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true
           
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.output }}
           path: publish/${{ matrix.output }}
