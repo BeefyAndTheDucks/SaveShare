@@ -28,16 +28,15 @@
       <None Remove="Saves\**" />
     </ItemGroup>
 
-    <Target Name="AppendTargetToAssemblyName" BeforeTargets="BeforeBuild" Condition="'$(RuntimeIdentifier)' != ''">
-        <PropertyGroup>
-            <_RuntimeOS>$(RuntimeIdentifier.Split('-')[0])</_RuntimeOS>
-            <_RuntimeArch>$(RuntimeIdentifier.Split('-')[1])</_RuntimeArch>
+    <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+        <_RuntimeOS>$([System.Text.RegularExpressions.Regex]::Match($(RuntimeIdentifier), '^([^-]+)'))</_RuntimeOS>
+        <_RuntimeArch>$([System.Text.RegularExpressions.Regex]::Match($(RuntimeIdentifier), '([^-]+)$'))</_RuntimeArch>
 
-            <_RuntimeOS Condition="'$(_RuntimeOS)' == 'win'">Windows</_RuntimeOS>
-            <_RuntimeOS Condition="'$(_RuntimeOS)' == 'linux'">Linux</_RuntimeOS>
+        <_RuntimeOS Condition="'$(_RuntimeOS)' == 'win'">Windows</_RuntimeOS>
+        <_RuntimeOS Condition="'$(_RuntimeOS)' == 'linux'">Linux</_RuntimeOS>
 
-            <AssemblyName>$(AssemblyName)-$(_RuntimeOS)-$(_RuntimeArch)</AssemblyName>
-        </PropertyGroup>
-    </Target>
+        <AssemblyName>$(MSBuildProjectName)-$(_RuntimeOS)-$(_RuntimeArch)</AssemblyName>
+        <TargetName>$(MSBuildProjectName)-$(_RuntimeOS)-$(_RuntimeArch)</TargetName>
+    </PropertyGroup>
 
 </Project>
