@@ -76,7 +76,10 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         IsConnectedToServer = _serverStatusService.IsConnectedToServer;
         if (!IsConnectedToServer)
+        {
+            Username = "NO CONNECTION";
             _noConnectionHandlerService.CheckNoConnection();
+        }
     }
 
     private bool IsCurrentUser(string? username) => username == _authenticationService.CurrentUser?.Username;
