@@ -50,10 +50,27 @@ public partial class AddCloudSaveDialog : Window
         LocalSaveInfo[] localSaves = _saveCatalogService.LocalSaves;
         
         CloudSaves.Clear();
-        foreach (SaveInfo save in _saveCatalogService.CloudSaves
-                     .Where(save => localSaves.All(localSave => localSave.SaveId != save.SaveId))
-                     .Where(save => string.IsNullOrEmpty(save.CheckedOutByUserName)))
-            CloudSaves.Add(new CloudSaveInfoViewModel { Name = save.Name, SaveId = save.SaveId });
+
+        foreach (SaveInfo save in _saveCatalogService.CloudSaves)
+        {
+            bool existsLocally = localSaves.Any(localSave => localSave.SaveId == save.SaveId);
+            bool isCheckedOut = !string.IsNullOrEmpty(save.CheckedOutByUserName);
+            
+            bool canDownload = !existsLocally && !isCheckedOut;
+
+            string? cannotDownloadReason = null;
+            
+            if (existsLocally)
+                cannotDownloadReason = "Already downloaded.";
+            else if (isCheckedOut)
+                cannotDownloadReason = $"Checked out by {save.CheckedOutByUserName}.";
+            
+            CloudSaves.Add(new CloudSaveInfoViewModel
+            {
+                Name = save.Name, SaveId = save.SaveId, IsAvailableForDownload = canDownload,
+                IsNotAvailableForDownloadReason = cannotDownloadReason
+            });
+        }
     }
 
     private async void BrowseButton_OnClick(object? sender, RoutedEventArgs e)

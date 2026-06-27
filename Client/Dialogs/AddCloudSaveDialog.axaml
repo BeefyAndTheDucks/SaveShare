@@ -32,9 +32,18 @@
                          SelectionChanged="SelectingItemsControl_OnSelectionChanged"
                          Name="CloudSavesList"
                          Background="#202020">
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem" x:DataType="vm:CloudSaveInfoViewModel">
+                            <Setter Property="IsEnabled" Value="{Binding IsAvailableForDownload}"></Setter>
+                        </Style>
+                    </ListBox.Styles>
+                    
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:CloudSaveInfoViewModel">
-                            <TextBlock Text="{Binding Name}"/>
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <TextBlock Grid.Column="0" Text="{Binding Name}"/>
+                                <TextBlock Grid.Column="2" IsVisible="{Binding !IsAvailableForDownload}" Text="{Binding IsNotAvailableForDownloadReason}"/>
+                            </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
