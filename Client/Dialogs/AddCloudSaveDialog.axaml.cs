@@ -18,6 +18,7 @@ public partial class AddCloudSaveDialog : Window
     
     private readonly ISaveCatalogService _saveCatalogService;
     private readonly IFolderPickerService _folderPickerService;
+    private readonly ITaskRunner _taskRunner;
 
     public ObservableCollection<CloudSaveInfoViewModel> CloudSaves { get; } = [];
 
@@ -29,9 +30,10 @@ public partial class AddCloudSaveDialog : Window
 
         _saveCatalogService = null!;
         _folderPickerService = null!;
+        _taskRunner = null!;
     }
     
-    public AddCloudSaveDialog(ISaveCatalogService saveCatalogService, IFolderPickerService folderPickerService)
+    public AddCloudSaveDialog(ISaveCatalogService saveCatalogService, IFolderPickerService folderPickerService, ITaskRunner taskRunner)
     {
         InitializeComponent();
         
@@ -39,13 +41,14 @@ public partial class AddCloudSaveDialog : Window
         
         _saveCatalogService = saveCatalogService;
         _folderPickerService = folderPickerService;
+        _taskRunner = taskRunner;
 
         Opened += async (_, _) => await LoadSaves();
     }
 
     private async Task LoadSaves()
     {
-        await _saveCatalogService.RefreshAsync();
+        await _taskRunner.RunAsync(ct => _saveCatalogService.RefreshAsync(ct));
 
         LocalSaveInfo[] localSaves = _saveCatalogService.LocalSaves;
         

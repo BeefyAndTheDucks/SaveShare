@@ -11,7 +11,8 @@ public interface IServerSession
     event Func<SaveInfo[], CancellationToken, Task>? SavesChanged;
     
     bool IsConnected { get; }
-    event EventHandler? ConnectionComplete;
+    event Func<CancellationToken, Task>? ConnectionStatusChanged;
+    event Func<CancellationToken, Task>? Connected;
     
     Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default);
     

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Client.Interfaces;
+using Common;
 
 namespace Client.Services;
 
@@ -27,10 +28,15 @@ public sealed class AppStartupService(IConnectionManager connectionManager, ISav
             await settingsStore.SaveAsync(appSettings, cancellationToken);
         }
         
+        connectionManager.Connected += ConnectionManagerOnConnected;
+        
         await connectionManager.ConnectAsync(
             appSettings.ServerUri,
             cancellationToken);
+    }
 
+    private async Task ConnectionManagerOnConnected(CancellationToken cancellationToken)
+    {
         try
         {
             await loginCoordinator.SignInOrCreateUserAsync(cancellationToken);
@@ -43,6 +49,6 @@ public sealed class AppStartupService(IConnectionManager connectionManager, ISav
             return;
         }
 
-        await saveCatalogService.RefreshAsync(cancellationToken);
+        saveCatalogService.RefreshAsync(cancellationToken).Forget(); // If this isn't .Forget(), a deadlock will occur.
     }
 }

@@ -7,7 +7,8 @@ namespace Client.Interfaces;
 public interface IConnectionManager
 {
     bool IsConnected { get; }
-    event EventHandler? ConnectionComplete;
+    event Func<CancellationToken, Task>? ConnectionStatusChanged;
+    event Func<CancellationToken, Task>? Connected;
 
     Task ConnectAsync(
         Uri server,

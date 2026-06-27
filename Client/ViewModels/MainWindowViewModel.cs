@@ -34,6 +34,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IOpenSettingsService _openSettingsService;
     private readonly INoConnectionHandlerService _noConnectionHandlerService;
     private readonly IServerStatusService _serverStatusService;
+    private readonly ITaskRunner _taskRunner;
+    private readonly IErrorPresenter _errorPresenter;
     
     private readonly Dictionary<string, LocalSaveInfoViewModel> _pendingSaves = new(StringComparer.OrdinalIgnoreCase);
 
@@ -47,12 +49,15 @@ public partial class MainWindowViewModel : ViewModelBase
         _openSettingsService = null!;
         _noConnectionHandlerService = null!;
         _serverStatusService = null!;
+        _taskRunner = null!;
+        _errorPresenter = null!;
     }
     
     public MainWindowViewModel(IAuthenticationService authenticationService, ISaveSyncService saveSyncService,
         ISelectSaveForUploadService selectSaveForUploadService, ISaveCatalogService saveCatalogService,
         ISelectSaveForDownloadService selectSaveForDownloadService, IOpenSettingsService openSettingsService,
-        IServerStatusService serverStatusService, INoConnectionHandlerService noConnectionHandlerService)
+        IServerStatusService serverStatusService, INoConnectionHandlerService noConnectionHandlerService,
+        ITaskRunner taskRunner, IErrorPresenter errorPresenter)
     {
         _authenticationService = authenticationService;
         _saveSyncService = saveSyncService;
@@ -62,6 +67,8 @@ public partial class MainWindowViewModel : ViewModelBase
         _openSettingsService = openSettingsService;
         _noConnectionHandlerService = noConnectionHandlerService;
         _serverStatusService = serverStatusService;
+        _taskRunner = taskRunner;
+        _errorPresenter = errorPresenter;
         
         _authenticationService.UserChanged += OnUserChanged;
         _saveCatalogService.SavesChanged += SaveCatalogServiceOnSavesChanged;
@@ -69,10 +76,10 @@ public partial class MainWindowViewModel : ViewModelBase
         if (_authenticationService.CurrentUser is not null)
             Username = _authenticationService.CurrentUser.Username;
 
-        serverStatusService.ConnectionComplete += ServerStatusServiceOnConnectionError;
+        _serverStatusService.ConnectionStatusChanged += ServerStatusServiceOnConnectionStatusChanged;
     }
 
-    private void ServerStatusServiceOnConnectionError(object? sender, EventArgs e)
+    private Task ServerStatusServiceOnConnectionStatusChanged(CancellationToken cancellationToken)
     {
         IsConnectedToServer = _serverStatusService.IsConnectedToServer;
         if (!IsConnectedToServer)
@@ -80,6 +87,8 @@ public partial class MainWindowViewModel : ViewModelBase
             Username = "NO CONNECTION";
             _noConnectionHandlerService.CheckNoConnection();
         }
+        
+        return Task.CompletedTask;
     }
 
     private bool IsCurrentUser(string? username) => username == _authenticationService.CurrentUser?.Username;
@@ -103,8 +112,7 @@ public partial class MainWindowViewModel : ViewModelBase
             .Select(s =>
             {
                 SaveInfo? relatedCloudSave = _saveCatalogService.CloudSaves
-                    .Cast<SaveInfo?>()
-                    .FirstOrDefault(cs => cs!.Value.SaveId == s.SaveId);
+                    .FirstOrDefault(cs => cs.SaveId == s.SaveId);
                 bool existsOnServer = relatedCloudSave.HasValue;
 
                 string? inUseBy = FormatUsernameString(relatedCloudSave?.CheckedOutByUserName);
@@ -208,9 +216,9 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private Task RefreshAsync(CancellationToken cancellationToken)
+    private async Task RefreshAsync(CancellationToken cancellationToken)
     {
-        return _saveCatalogService.RefreshAsync(cancellationToken);
+        await _taskRunner.RunAsync(ct => _saveCatalogService.RefreshAsync(ct), cancellationToken);
     }
 
     [RelayCommand]
@@ -233,7 +241,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task TakeInUse(LocalSaveInfoViewModel vm, CancellationToken cancellationToken)
     {
-        await _saveSyncService.CheckoutCloudSaveAsync(vm.Id, cancellationToken);
+        await _taskRunner.RunAsync(ct => _saveSyncService.CheckoutCloudSaveAsync(vm.Id, ct), cancellationToken);
     }
 
     private async Task DownloadChanges(LocalSaveInfoViewModel vm, CancellationToken cancellationToken)
@@ -250,8 +258,11 @@ public partial class MainWindowViewModel : ViewModelBase
         LocalSaveViewModelProgress receiveDeltasProgress = new(vm, index++ / 5, index / 5, "Receiving deltas...");
         LocalSaveViewModelProgress applyDeltasProgress = new(vm, index++ / 5, index / 5, "Applying deltas...");
 
-        await _saveSyncService.DownloadCloudSaveChangesAsync(vm.Id, buildSignaturesProgress, sendSignaturesProgress,
-            buildDeltasProgress, receiveDeltasProgress, applyDeltasProgress, cancellationToken);
+        await _taskRunner.RunAsync(
+            ct => _saveSyncService.DownloadCloudSaveChangesAsync(vm.Id, buildSignaturesProgress, sendSignaturesProgress,
+                buildDeltasProgress, receiveDeltasProgress, applyDeltasProgress, ct), 
+            cancellationToken);
+        
         vm.CurrentOperation = null;
         vm.CurrentSubOperation = null;
     }
@@ -270,8 +281,11 @@ public partial class MainWindowViewModel : ViewModelBase
         LocalSaveViewModelProgress sendDeltasProgress = new(vm, index++ / 5, index / 5, "Sending deltas...");
         LocalSaveViewModelProgress applyDeltasProgress = new(vm, index++ / 5, index / 5, "Server - Applying deltas...");
         
-        await _saveSyncService.UploadLocalSaveChangesAsync(vm.Id, buildSignaturesProgress, receiveSignaturesProgress,
-            buildDeltasProgress, sendDeltasProgress, applyDeltasProgress, cancellationToken);
+        await _taskRunner.RunAsync(
+            ct => _saveSyncService.UploadLocalSaveChangesAsync(vm.Id, buildSignaturesProgress,
+                receiveSignaturesProgress, buildDeltasProgress, sendDeltasProgress, applyDeltasProgress, ct),
+            cancellationToken);
+        
         vm.CurrentOperation = null;
         vm.CurrentSubOperation = null;
     }
@@ -300,10 +314,9 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             await task(taskInfo.Progress, cancellationToken);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            TaskOnException(taskInfo);
-            throw;
+            await TaskOnException(taskInfo, exception);
         }
         finally
         {
@@ -333,10 +346,11 @@ public partial class MainWindowViewModel : ViewModelBase
         return new TaskInfo(shadowVm, progress, saveInfo);
     }
 
-    private void TaskOnException(TaskInfo task)
+    private async Task TaskOnException(TaskInfo task, Exception exception)
     {
         LocalSaves = LocalSaves?.Where(s => s.Id != task.SaveInfo.SaveId).ToArray();
         _pendingSaves.Remove(task.SaveInfo.SaveName);
+        await _errorPresenter.ShowErrorAsync(exception);
     }
 
     private static void EndTask(TaskInfo task)
@@ -371,13 +385,5 @@ public class LocalSaveViewModelProgress(LocalSaveInfoViewModel viewModel, double
         viewModel.CurrentSubOperation = subOperationName;
         viewModel.CurrentSubOperationProgress = value;
         viewModel.CurrentSubOperationIndeterminate = false;
-    }
-}
-
-public class ConsoleProgress : IProgress<double>
-{
-    public void Report(double value)
-    {
-        Console.WriteLine(value);
     }
 }

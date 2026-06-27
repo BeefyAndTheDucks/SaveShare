@@ -9,7 +9,8 @@ namespace Client.Interfaces;
 public interface ITransport
 {
     bool IsConnected { get; }
-    event EventHandler? ConnectionComplete;
+    event Func<CancellationToken, Task>? ConnectionStatusChanged;
+    event Func<CancellationToken, Task>? Connected;
     
     Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default);
     Task SendMessageAsync(C2SMessage message, CancellationToken cancellationToken = default);

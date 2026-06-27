@@ -12,10 +12,16 @@ public sealed class ServerSession(ITransport transport) : IServerSession
 {
     public event Func<SaveInfo[], CancellationToken, Task>? SavesChanged;
     public bool IsConnected => transport.IsConnected;
-    public event EventHandler? ConnectionComplete
+    public event Func<CancellationToken, Task>? ConnectionStatusChanged
     {
-        add => transport.ConnectionComplete += value;
-        remove => transport.ConnectionComplete -= value;
+        add => transport.ConnectionStatusChanged += value;
+        remove => transport.ConnectionStatusChanged -= value;
+    }
+    
+    public event Func<CancellationToken, Task>? Connected
+    {
+        add => transport.Connected += value;
+        remove => transport.Connected -= value;
     }
 
     private readonly SemaphoreSlim _operationLock = new(1, 1);
@@ -77,7 +83,7 @@ public sealed class ServerSession(ITransport transport) : IServerSession
     
     private async Task<TMessage> SendAndExpectAsync<TMessage>(
         C2SMessage request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
         where TMessage : S2CMessage
     {
         await transport.SendMessageAsync(request, cancellationToken);
@@ -94,31 +100,17 @@ public sealed class ServerSession(ITransport transport) : IServerSession
     public async Task<S2CSuccessfullySignedInMessage> SignInAsExistingUserAsync(Guid userId,
         CancellationToken cancellationToken = default)
     {
-        await _operationLock.WaitAsync(cancellationToken);
-
-        try
-        {
-            return await SendAndExpectAsync<S2CSuccessfullySignedInMessage>(new C2SSignInAsExistingUserMessage(userId),
-                cancellationToken);
-        }
-        finally
-        {
-            _operationLock.Release();
-        }
+        // Shouldn't acquire lock here since this is a one-time operation.
+        
+        return await SendAndExpectAsync<S2CSuccessfullySignedInMessage>(new C2SSignInAsExistingUserMessage(userId),
+            cancellationToken);
     }
 
     public async Task<S2CNewUserCreatedMessage> SignInAsNewUserAsync(string userName, CancellationToken cancellationToken = default)
     {
-        await _operationLock.WaitAsync(cancellationToken);
-
-        try
-        {
-            return await SendAndExpectAsync<S2CNewUserCreatedMessage>(new C2SSignInAsNewUserMessage(userName), cancellationToken);
-        }
-        finally
-        {
-            _operationLock.Release();
-        }
+        // Shouldn't acquire lock here since this is a one-time operation.
+        
+        return await SendAndExpectAsync<S2CNewUserCreatedMessage>(new C2SSignInAsNewUserMessage(userName), cancellationToken);
     }
 
     public async Task<SaveInfo[]> ListSavesAsync(CancellationToken cancellationToken = default)

@@ -5,5 +5,5 @@ namespace Client.Interfaces;
 
 public interface IModalService
 {
-    Task<bool> ShowAsync(string title, string message, string yes, string? no, CancellationToken cancellationToken = default);
+    Task<bool> ShowAsync(string title, string message, string yes = "Ok", string? no = null, CancellationToken cancellationToken = default);
 }

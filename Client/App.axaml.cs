@@ -113,6 +113,8 @@ public partial class App : Application
         services.AddSingleton<IServerStatusService, ServerStatusService>();
         services.AddSingleton<INoConnectionHandlerService, NoConnectionHandlerService>();
         services.AddSingleton<IInitialSetupService, InitialSetupService>();
+        services.AddSingleton<IErrorPresenter, ErrorPresenter>();
+        services.AddSingleton<ITaskRunner, TaskRunner>();
         
         // ViewModels
         services.AddTransient<MainWindowViewModel>();

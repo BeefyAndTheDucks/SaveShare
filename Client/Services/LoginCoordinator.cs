@@ -7,14 +7,21 @@ using Common;
 
 namespace Client.Services;
 
-public sealed class LoginCoordinator(IAuthenticationService authService, ICreateUserService createUserService) : ILoginCoordinator
+public sealed class LoginCoordinator(IAuthenticationService authService, ICreateUserService createUserService, IErrorPresenter errorPresenter) : ILoginCoordinator
 {
     public async Task<User> SignInOrCreateUserAsync(CancellationToken cancellationToken = default)
     {
-        User? existingUser = await authService.TrySignInAsync(cancellationToken);
-        
-        if (existingUser is not null)
-            return existingUser;
+        try
+        {
+            User? existingUser = await authService.TrySignInAsync(cancellationToken);
+
+            if (existingUser is not null)
+                return existingUser;
+        }
+        catch (Exception ex)
+        {
+            await errorPresenter.ShowErrorAsync(ex, cancellationToken);
+        }
 
         return await TryCreateUserAsync(cancellationToken: cancellationToken);
     }
@@ -40,6 +47,11 @@ public sealed class LoginCoordinator(IAuthenticationService authService, ICreate
         catch (ServerErrorException ex)
         {
             return await TryCreateUserAsync(ex.Error.Message, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await errorPresenter.ShowErrorAsync(ex, cancellationToken);
+            return await TryCreateUserAsync("Failed to create user", cancellationToken);
         }
     }
 }

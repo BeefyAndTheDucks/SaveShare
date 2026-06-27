@@ -11,7 +11,7 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Client.ViewModels;
 
-public partial class LocalSaveInfoViewModel(IModalService modalService, ISaveCatalogService saveCatalogService, IMainWindowProvider mainWindowProvider) : ViewModelBase
+public partial class LocalSaveInfoViewModel(IModalService modalService, ISaveCatalogService saveCatalogService, IMainWindowProvider mainWindowProvider, ITaskRunner taskRunner, IErrorPresenter errorPresenter) : ViewModelBase
 {
     [ObservableProperty] public partial string Name { get; set; } = "???";
     
@@ -74,12 +74,15 @@ public partial class LocalSaveInfoViewModel(IModalService modalService, ISaveCat
             LocalSaveInfo? localSaveEntry = saveCatalogService.GetLocalSave(Id);
 
             if (localSaveEntry is null)
-                throw new SaveNotFoundException();
+            {
+                await errorPresenter.ShowErrorAsync(new SaveNotFoundException(), cancellationToken);
+                return;
+            }
             
             Directory.Delete(localSaveEntry.LocalPath, true);
         }
         
-        await saveCatalogService.DeleteLocalSave(Id, cancellationToken);
+        await taskRunner.RunAsync(ct => saveCatalogService.DeleteLocalSave(Id, ct), cancellationToken);
     }
 
     [RelayCommand]
@@ -94,7 +97,10 @@ public partial class LocalSaveInfoViewModel(IModalService modalService, ISaveCat
     {
         LocalSaveInfo? localSave = saveCatalogService.GetLocalSave(Id);
         if (localSave is null)
-            throw new SaveNotFoundException();
+        {
+            await errorPresenter.ShowErrorAsync(new SaveNotFoundException(), cancellationToken);
+            return;
+        }
         
         await mainWindowProvider.MainWindow.Launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(localSave.LocalPath));
     }

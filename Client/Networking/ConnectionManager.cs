@@ -8,10 +8,16 @@ namespace Client.Networking;
 public class ConnectionManager(IServerSession serverSession) : IConnectionManager
 {
     public bool IsConnected => serverSession.IsConnected;
-    public event EventHandler? ConnectionComplete
+    public event Func<CancellationToken, Task>? ConnectionStatusChanged
     {
-        add => serverSession.ConnectionComplete += value;
-        remove => serverSession.ConnectionComplete -= value;
+        add => serverSession.ConnectionStatusChanged += value;
+        remove => serverSession.ConnectionStatusChanged -= value;
+    }
+    
+    public event Func<CancellationToken, Task>? Connected
+    {
+        add => serverSession.Connected += value;
+        remove => serverSession.Connected -= value;
     }
 
     public async Task ConnectAsync(Uri server, CancellationToken cancellationToken = default)

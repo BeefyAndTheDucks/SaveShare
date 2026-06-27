@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Client.Interfaces;
 
 namespace Client.Services;
@@ -6,9 +8,15 @@ namespace Client.Services;
 public class ServerStatusService(IConnectionManager connectionManager) : IServerStatusService
 {
     public bool IsConnectedToServer => connectionManager.IsConnected;
-    event EventHandler? IServerStatusService.ConnectionComplete
+    event Func<CancellationToken, Task>? IServerStatusService.ConnectionStatusChanged
     {
-        add => connectionManager.ConnectionComplete += value;
-        remove => connectionManager.ConnectionComplete -= value;
+        add => connectionManager.ConnectionStatusChanged += value;
+        remove => connectionManager.ConnectionStatusChanged -= value;
+    }
+    
+    public event Func<CancellationToken, Task>? Connected
+    {
+        add => connectionManager.Connected += value;
+        remove => connectionManager.Connected -= value;
     }
 }
