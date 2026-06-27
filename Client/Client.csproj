@@ -28,4 +28,16 @@
     <ItemGroup>
       <ProjectReference Include="..\Common\Common.csproj" />
     </ItemGroup>
+    
+    <Target Name="AppendTargetToAssemblyName" BeforeTargets="BeforeBuild" Condition="'$(RuntimeIdentifier)' != ''">
+        <PropertyGroup>
+            <_RuntimeOS>$(RuntimeIdentifier.Split('-')[0])</_RuntimeOS>
+            <_RuntimeArch>$(RuntimeIdentifier.Split('-')[1])</_RuntimeArch>
+
+            <_RuntimeOS Condition="'$(_RuntimeOS)' == 'win'">Windows</_RuntimeOS>
+            <_RuntimeOS Condition="'$(_RuntimeOS)' == 'linux'">Linux</_RuntimeOS>
+
+            <AssemblyName>$(AssemblyName)-$(_RuntimeOS)-$(_RuntimeArch)</AssemblyName>
+        </PropertyGroup>
+    </Target>
 </Project>
