@@ -13,9 +13,6 @@ namespace Client;
 
 sealed class Program
 {
-    public static ConnectionManager ConnectionManager { get; private set; } = null!;
-    public static MainWindowViewModel? ViewModel { get; set; }
-
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
