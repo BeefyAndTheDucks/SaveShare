@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Client.Extensions;
 using Client.Interfaces;
 using Common;
 
@@ -71,7 +72,11 @@ public class SaveCatalogService : ISaveCatalogService
     public async Task DeleteLocalSave(SaveId saveId, CancellationToken cancellationToken = default)
     {
         await _localSavesStore.RemoveAsync(saveId, cancellationToken);
-        await _serverSession.ReleaseAsync(saveId, cancellationToken);
+     
+        var getSaveResult = GetSaveInfo(saveId);
+        if (getSaveResult.Succeeded && getSaveResult.Value.IsCheckedOutByLocalUser())
+            await _serverSession.ReleaseAsync(saveId, cancellationToken);
+        
         SavesChanged?.Invoke(this, EventArgs.Empty);
     }
 
