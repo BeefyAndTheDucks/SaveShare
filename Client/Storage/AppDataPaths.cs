@@ -15,7 +15,11 @@ public sealed class AppDataPaths : IAppDataPaths
     {
         string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         
-        AppDataDirectory = Path.Combine(appData, "SaveShare");
+        AppDataDirectory = Path.Combine(appData, "SaveShare"
+#if DEBUG
+            , "DEBUG"
+#endif
+            );
         
         Directory.CreateDirectory(AppDataDirectory);
         
