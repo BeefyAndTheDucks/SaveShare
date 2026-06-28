@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Client.Exceptions;
@@ -95,7 +96,31 @@ public sealed class ServerSession(ITransport transport) : IServerSession
     
     public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default)
     {
-        await transport.ConnectAsync(uri, cancellationToken);
+        await transport.ConnectAsync(uri, VerifyProtocolVersion, cancellationToken);
+
+        return;
+
+        async Task VerifyProtocolVersion(CancellationToken ct)
+        {
+            S2CServerVersionMessage serverVersionMessage = await ExpectAsync<S2CServerVersionMessage>(ct);
+            bool protocolSubVersionMismatch = ProtocolV1.SUBVERSION != serverVersionMessage.ProtocolVersion;
+            if (protocolSubVersionMismatch)
+            {
+                try
+                {
+                    await transport.DisconnectAsync(WebSocketCloseStatus.ProtocolError,
+                        "Incompatible protocol version.", ct);
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
+
+                throw new IncompatibleVersionsException(ProtocolV1.SUBVERSION,
+                    serverVersionMessage.ProtocolVersion, Constants.APPLICATION_VERSION,
+                    serverVersionMessage.ApplicationVersion);
+            }
+        }
     }
 
     public async Task<S2CSuccessfullySignedInMessage> SignInAsExistingUserAsync(Guid userId,

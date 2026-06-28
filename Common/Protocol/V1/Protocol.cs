@@ -1,9 +1,16 @@
 namespace Common.Protocol.V1;
 
+public static class ProtocolV1
+{
+    public const int SUBVERSION = 1;
+}
+
 public enum S2CMessageType
 {
     Error = -1,
     Success = 0,
+    
+    ServerVersion = 1,
     
     NewUserCreated,
     SuccessfullySignedIn,
@@ -50,6 +57,9 @@ public enum ErrorCode
 
 
 // Direct operation result messages
+[S2CMessageType(S2CMessageType.ServerVersion)]
+public record S2CServerVersionMessage(int ProtocolVersion = ProtocolV1.SUBVERSION, string ApplicationVersion = Constants.APPLICATION_VERSION) : S2CMessage(S2CMessageType.ServerVersion);
+
 [S2CMessageType(S2CMessageType.SuccessfullySignedIn)]
 public record S2CSuccessfullySignedInMessage (string UserName) : S2CMessage(S2CMessageType.SuccessfullySignedIn);
 

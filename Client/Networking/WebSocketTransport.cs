@@ -44,7 +44,7 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
         
         try
         {
-            await ConnectAsync(LastUsedUri, cancellationToken);
+            await ConnectAsync(LastUsedUri, cancellationToken: cancellationToken);
         }
         catch (TransportException)
         {
@@ -62,7 +62,7 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
         return new TransportException("Lost connection to the server.", innerException);
     }
 
-    public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
+    public async Task ConnectAsync(Uri uri, Func<CancellationToken, Task>? onConnected = null, CancellationToken cancellationToken = default)
     {
         if (IsConnected)
             throw new TransportException("Cannot connect to server: Already connected.");
@@ -74,21 +74,28 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
             WebSocket = new ClientWebSocket();
             await WebSocket.ConnectAsync(uri, cancellationToken);
             Console.WriteLine("Connected to server");
-            
+
             _lostConnectionReported = false;
-            
+
+            if (onConnected is not null)
+                await onConnected.Invoke(cancellationToken);
+
             if (Connected is not null)
                 await Connected.Invoke(cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            throw new TransportException("Failed to connect to the server.", ex);
         }
         finally
         {
             if (ConnectionStatusChanged is not null)
                 await ConnectionStatusChanged.Invoke(cancellationToken);
         }
+    }
+
+    public async Task DisconnectAsync(WebSocketCloseStatus reason = WebSocketCloseStatus.NormalClosure, string? message = null, CancellationToken cancellationToken = default)
+    {
+        if (WebSocket is null)
+            return;
+        
+        await WebSocket.CloseAsync(reason, message, cancellationToken);
     }
 
     public async Task SendMessageAsync(C2SMessage message, CancellationToken cancellationToken = default)
@@ -247,8 +254,8 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
 
         if (WebSocket != null)
         {
-            if (IsConnected)
-                await WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client shutting down", CancellationToken.None);
+            if (WebSocket.State == WebSocketState.Open)
+                await DisconnectAsync(WebSocketCloseStatus.NormalClosure, "Client shutting down", CancellationToken.None);
             await CastAndDispose(WebSocket);
         }
 

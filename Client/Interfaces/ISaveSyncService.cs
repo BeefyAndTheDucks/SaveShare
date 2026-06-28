@@ -7,6 +7,7 @@ namespace Client.Interfaces;
 
 public interface ISaveSyncService
 {
+    event Action<bool> BusyStatusChanged;
     bool IsBusy { get; }
     
     Task<SaveInfo> AddLocalSaveAsync(

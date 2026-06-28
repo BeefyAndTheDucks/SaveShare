@@ -9,6 +9,7 @@ namespace Client.Services;
 
 public class SaveSyncService(IServerSession serverSession, ISaveCatalogService saveCatalogService, ILocalSavesStore localSavesStore) : ISaveSyncService
 {
+    public event Action<bool>? BusyStatusChanged;
     public bool IsBusy => _tasksInProgress > 0;
 
     private int _tasksInProgress;
@@ -16,11 +17,14 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
     private void BeginTask()
     {
         _tasksInProgress++;
+        BusyStatusChanged?.Invoke(true);
     }
 
     private void EndTask()
     {
         _tasksInProgress--;
+        if (_tasksInProgress <= 0)
+            BusyStatusChanged?.Invoke(false);
     }
 
     public async Task<SaveInfo> AddLocalSaveAsync(string savePath, string saveName, IProgress<double>? progress = null,

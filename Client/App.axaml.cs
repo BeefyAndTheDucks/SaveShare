@@ -72,7 +72,9 @@ public partial class App : Application
             IAppStartupService startupService =
                 Services.GetRequiredService<IAppStartupService>();
 
-            await startupService.StartAsync();
+            ITaskRunner taskRunner = Services.GetRequiredService<ITaskRunner>();
+
+            await taskRunner.RunAsync(startupService.StartAsync);
         }
         catch (Exception ex)
         {

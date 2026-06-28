@@ -56,6 +56,8 @@ public class ConnectionManagerV1(CancellationToken exitToken)
         
         try
         {
+            await MessageHelpers.SendMessage(new S2CServerVersionMessage(), ws, cts.Token);
+            
             while (ws.State == WebSocketState.Open)
             {
                 string received = await WebSocketUtils.ReceiveString(ws, cts.Token);

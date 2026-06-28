@@ -25,6 +25,9 @@ public partial class MainWindowViewModel : ViewModelBase
     
     [ObservableProperty]
     public partial bool IsConnectedToServer { get; set; }
+
+    [ObservableProperty]
+    public partial string WindowTitle { get; set; } = $"Save Share Client (GUI) Version {Constants.APPLICATION_VERSION}";
     
     private readonly IAuthenticationService _authenticationService;
     private readonly ISaveSyncService _saveSyncService;
@@ -79,6 +82,13 @@ public partial class MainWindowViewModel : ViewModelBase
             Username = _authenticationService.CurrentUser.Username;
 
         _serverStatusService.ConnectionStatusChanged += ServerStatusServiceOnConnectionStatusChanged;
+        
+        _saveSyncService.BusyStatusChanged += SaveSyncServiceOnBusyStatusChanged;
+    }
+
+    private void SaveSyncServiceOnBusyStatusChanged(bool busy)
+    {
+        WindowTitle = $"Save Share Client (GUI) Version {Constants.APPLICATION_VERSION} {(busy ? " [BUSY]" : "")}";
     }
 
     private Task ServerStatusServiceOnConnectionStatusChanged(CancellationToken cancellationToken)
