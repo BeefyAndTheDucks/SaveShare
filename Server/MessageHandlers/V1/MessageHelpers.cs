@@ -31,13 +31,14 @@ public static class MessageHandlerFactory
             if (result.Handled)
                 return result.PropagateUpdates;
         }
-        await HandleUnknownMessage(ws, ct);
+        await HandleUnknownMessage(messageJObject, ws, ct);
         return false;
     }
 
-    private static async Task HandleUnknownMessage(WebSocket webSocket, CancellationToken cancellationToken = default)
+    private static async Task HandleUnknownMessage(JObject message, WebSocket webSocket, CancellationToken cancellationToken = default)
     {
-        S2CErrorMessage response = new(ErrorCode.UnknownMessage, "Unknown message type");
+        string messageRawJson = message.ToString();
+        S2CErrorMessage response = new(ErrorCode.UnknownMessage, $"Unknown or unhandled message type (Raw JSON: {messageRawJson})");
         await MessageHelpers.SendMessage(response, webSocket, cancellationToken);
     }
 }
