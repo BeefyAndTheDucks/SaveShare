@@ -5,7 +5,8 @@ namespace Server.MessageHandlers.V1;
 
 public class CheckoutSaveMessageHandler : MessageHandler<C2SCheckoutSaveMessage>
 {
-    protected override async Task<bool> Handle(C2SCheckoutSaveMessage message, WebSocket webSocket, CancellationToken cancellationToken = default)
+    protected override async Task Handle(C2SCheckoutSaveMessage message, WebSocket webSocket,
+        CancellationToken cancellationToken = default)
     {
         User user = Program.ConnectionManagerV1.GetUser(webSocket);
         
@@ -14,10 +15,9 @@ public class CheckoutSaveMessageHandler : MessageHandler<C2SCheckoutSaveMessage>
         if (!checkoutResult.Succeeded)
         {
             await Error(ErrorCode.FailedToCheckOut, checkoutResult.Error, webSocket, cancellationToken);
-            return false;
+            return;
         }
 
         await MessageHelpers.SendMessage(new S2CSuccessMessage("Successfully checked out"), webSocket, cancellationToken);
-        return true;
     }
 }

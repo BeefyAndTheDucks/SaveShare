@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Server.MessageHandlers.V1;
 
-public record HandleResult(bool Handled, bool PropagateUpdates);
+public record HandleResult(bool Handled);
 
 public abstract class MessageHandler
 {
@@ -32,11 +32,11 @@ public abstract class MessageHandler<TMessage> : MessageHandler where TMessage :
     {
         Result<TMessage> parseResult = messageJsonObject.TryParseAsMessage<TMessage>();
 
-        if (!parseResult.Succeeded) return new HandleResult(false, false);
+        if (!parseResult.Succeeded) return new HandleResult(false);
 
-        bool propagate = await Handle(parseResult.Value, webSocket, cancellationToken);
+        await Handle(parseResult.Value, webSocket, cancellationToken);
 
-        return new HandleResult(true, propagate);
+        return new HandleResult(true);
     }
 
     protected override Task<HandleResult> Handle(C2SMessage? message, WebSocket webSocket, CancellationToken cancellationToken = default)
@@ -44,5 +44,5 @@ public abstract class MessageHandler<TMessage> : MessageHandler where TMessage :
         throw new InvalidOperationException("This method should not be called");
     }
 
-    protected abstract Task<bool> Handle(TMessage message, WebSocket webSocket, CancellationToken cancellationToken = default);
+    protected abstract Task Handle(TMessage message, WebSocket webSocket, CancellationToken cancellationToken = default);
 }

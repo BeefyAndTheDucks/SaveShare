@@ -5,7 +5,8 @@ namespace Server.MessageHandlers.V1;
 
 public class DownloadSaveChangesMessageHandler : MessageHandler<C2SDownloadSaveChangesMessage>
 {
-    protected override async Task<bool> Handle(C2SDownloadSaveChangesMessage message, WebSocket webSocket, CancellationToken cancellationToken = default)
+    protected override async Task Handle(C2SDownloadSaveChangesMessage message, WebSocket webSocket,
+        CancellationToken cancellationToken = default)
     {
         User user = Program.ConnectionManagerV1.GetUser(webSocket);
         Result<bool> hasCheckoutResult = await SaveRegistry.HasCheckout(message.SaveId, user.Username, cancellationToken);
@@ -13,19 +14,19 @@ public class DownloadSaveChangesMessageHandler : MessageHandler<C2SDownloadSaveC
         if (!hasCheckoutResult.Succeeded)
         {
             await Error(ErrorCode.FailedToDownload, hasCheckoutResult.Error, webSocket, cancellationToken);
-            return false;
+            return;
         }
         if (!hasCheckoutResult.Value)
         {
             await Error(ErrorCode.NotCheckedOut, "You haven't checked out the save, please check out the save first.", webSocket, cancellationToken);
-            return false;
+            return;
         }
         
         Result<string> getPathResult = SaveRegistry.GetRealSavePath(message.SaveId);
         if (!getPathResult.Succeeded)
         {
             await Error(ErrorCode.SaveFilesMissing, getPathResult.Error, webSocket, cancellationToken);
-            return false;
+            return;
         }
         
         DirectoryManifest serverManifest = await DirectoryManifest.From(getPathResult.Value, new MessageHelpers.MessageProgress(webSocket, cancellationToken), cancellationToken);
@@ -38,7 +39,5 @@ public class DownloadSaveChangesMessageHandler : MessageHandler<C2SDownloadSaveC
             await MessageHelpers.SendMessage(new S2CReadyToSendBinaryDataMessage(byteSize), webSocket, ct);
             await MessageHelpers.AwaitResponse<C2SReadyForBinaryDataMessage>(webSocket, ct);
         }, cancellationToken);
-
-        return false;
     }
 }

@@ -23,16 +23,15 @@ public static class MessageHandlerFactory
         new UploadSaveChangesMessageHandler(),
     ];
     
-    public static async Task<bool> Handle(JObject messageJObject, WebSocket ws, CancellationToken ct = default)
+    public static async Task Handle(JObject messageJObject, WebSocket ws, CancellationToken ct = default)
     {
         foreach (MessageHandler messageHandler in MessageHandlers)
         {
             HandleResult result = await messageHandler.Handle(messageJObject, ws, ct);
             if (result.Handled)
-                return result.PropagateUpdates;
+                return;
         }
         await HandleUnknownMessage(messageJObject, ws, ct);
-        return false;
     }
 
     private static async Task HandleUnknownMessage(JObject message, WebSocket webSocket, CancellationToken cancellationToken = default)

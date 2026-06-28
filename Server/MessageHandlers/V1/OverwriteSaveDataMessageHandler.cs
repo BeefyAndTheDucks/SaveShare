@@ -6,12 +6,13 @@ namespace Server.MessageHandlers.V1;
 
 public class OverwriteSaveDataMessageHandler : MessageHandler<C2SOverwriteSaveDataMessage>
 {
-    protected override async Task<bool> Handle(C2SOverwriteSaveDataMessage message, WebSocket webSocket, CancellationToken cancellationToken = default)
+    protected override async Task Handle(C2SOverwriteSaveDataMessage message, WebSocket webSocket,
+        CancellationToken cancellationToken = default)
     {
         if (!SaveRegistry.SaveExists(message.SaveId))
         {
             await Error(ErrorCode.SaveDoesNotExist, "Save does not exist", webSocket, cancellationToken);
-            return false;
+            return;
         }
         
         string path = SaveRegistry.GetRealSavePathNoExistsCheck(message.SaveId);
@@ -31,9 +32,7 @@ public class OverwriteSaveDataMessageHandler : MessageHandler<C2SOverwriteSaveDa
         if (updateResult.Failed)
         {
             await Error(ErrorCode.OverwriteSaveDataFailed, "Failed to update save data", webSocket, cancellationToken);
-            return false;
+            return;
         }
-
-        return true;
     }
 }

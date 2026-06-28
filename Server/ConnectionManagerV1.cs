@@ -11,7 +11,6 @@ public class ConnectionManagerV1(CancellationToken exitToken)
     private readonly List<WebSocket> _activeConnections = [];
     
     private readonly ConcurrentDictionary<WebSocket, User> _users = new();
-    private readonly ConcurrentDictionary<WebSocket, bool> _shouldUpdateSaveList = new();
     
     public User GetUser(WebSocket ws) => _users[ws];
 
@@ -50,7 +49,6 @@ public class ConnectionManagerV1(CancellationToken exitToken)
     
         using WebSocket ws = await context.WebSockets.AcceptWebSocketAsync();
         _activeConnections.Add(ws);
-        _shouldUpdateSaveList.TryAdd(ws, false);
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted, exitToken);
 
         bool signedIn = false;
@@ -72,26 +70,13 @@ public class ConnectionManagerV1(CancellationToken exitToken)
                         signedIn = true;
                     continue;
                 }
-
-                if (_shouldUpdateSaveList[ws])
-                {
-                    await MessageHelpers.SendMessage(new S2CSavesChangedMessage(await SaveRegistry.GetSaves(cts.Token)), ws, cts.Token);
-                    continue;
-                }
                 
-                bool propagate = await MessageHandlerFactory.Handle(receivedJObject, ws, cts.Token);
-
-                if (!propagate)
-                    continue;
-
-                foreach (WebSocket connection in _activeConnections.Where(c => c != ws))
-                    _shouldUpdateSaveList[connection] = true;
+                await MessageHandlerFactory.Handle(receivedJObject, ws, cts.Token);
             }
         }
         finally
         {
             _activeConnections.Remove(ws);
-            _shouldUpdateSaveList.Remove(ws, out _);
             _users.TryRemove(ws, out _);
         }
     }

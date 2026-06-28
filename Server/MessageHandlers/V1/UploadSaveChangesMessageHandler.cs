@@ -5,12 +5,13 @@ namespace Server.MessageHandlers.V1;
 
 public class UploadSaveChangesMessageHandler : MessageHandler<C2SUploadSaveChangesMessage>
 {
-    protected override async Task<bool> Handle(C2SUploadSaveChangesMessage message, WebSocket webSocket, CancellationToken cancellationToken = default)
+    protected override async Task Handle(C2SUploadSaveChangesMessage message, WebSocket webSocket,
+        CancellationToken cancellationToken = default)
     {
         if (!SaveRegistry.SaveExists(message.SaveId))
         {
             await Error(ErrorCode.SaveDoesNotExist, "Save does not exist", webSocket, cancellationToken);
-            return false;
+            return;
         }
         
         User user = Program.ConnectionManagerV1.GetUser(webSocket);
@@ -19,19 +20,19 @@ public class UploadSaveChangesMessageHandler : MessageHandler<C2SUploadSaveChang
         if (hasCheckoutResult.Failed)
         {
             await Error(ErrorCode.FailedToDownload, hasCheckoutResult.Error, webSocket, cancellationToken);
-            return false;
+            return;
         }
         if (!hasCheckoutResult.Value)
         {
             await Error(ErrorCode.NotCheckedOut, "You haven't checked out the save, please check out the save first.", webSocket, cancellationToken);
-            return false;
+            return;
         }
 
         Result<string> getPathResult = SaveRegistry.GetRealSavePath(message.SaveId);
         if (getPathResult.Failed)
         {
             await Error(ErrorCode.SaveFilesMissing, getPathResult.Error, webSocket, cancellationToken);
-            return false;
+            return;
         }
         
         DirectoryManifest serverManifest = await DirectoryManifest.From(getPathResult.Value, new MessageHelpers.MessageProgress(webSocket, cancellationToken), cancellationToken);
@@ -75,9 +76,7 @@ public class UploadSaveChangesMessageHandler : MessageHandler<C2SUploadSaveChang
         if (updateResult.Failed)
         {
             await Error(ErrorCode.FailedToDownload, updateResult.Error, webSocket, cancellationToken);
-            return false;
+            return;
         }
-        
-        return true;
     }
 }

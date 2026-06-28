@@ -5,7 +5,8 @@ namespace Server.MessageHandlers.V1;
 
 public class DownloadSaveMessageHandler : MessageHandler<C2SDownloadSaveMessage>
 {
-    protected override async Task<bool> Handle(C2SDownloadSaveMessage message, WebSocket webSocket, CancellationToken cancellationToken = default)
+    protected override async Task Handle(C2SDownloadSaveMessage message, WebSocket webSocket,
+        CancellationToken cancellationToken = default)
     {
         User user = Program.ConnectionManagerV1.GetUser(webSocket);
         Result<bool> hasCheckoutResult = await SaveRegistry.HasCheckout(message.SaveId, user.Username, cancellationToken);
@@ -13,19 +14,19 @@ public class DownloadSaveMessageHandler : MessageHandler<C2SDownloadSaveMessage>
         if (!hasCheckoutResult.Succeeded)
         {
             await Error(ErrorCode.FailedToDownload, hasCheckoutResult.Error, webSocket, cancellationToken);
-            return false;
+            return;
         }
         if (!hasCheckoutResult.Value)
         {
             await Error(ErrorCode.NotCheckedOut, "You haven't checked out the save, please check out the save first.", webSocket, cancellationToken);
-            return false;
+            return;
         }
         
         Result<string> getPathResult = SaveRegistry.GetRealSavePath(message.SaveId);
         if (!getPathResult.Succeeded)
         {
             await Error(ErrorCode.SaveFilesMissing, getPathResult.Error, webSocket, cancellationToken);
-            return false;
+            return;
         }
 
         long byteCount = await DirectoryPacker.GetPackedSizeAsync(getPathResult.Value, cancellationToken);
@@ -34,6 +35,5 @@ public class DownloadSaveMessageHandler : MessageHandler<C2SDownloadSaveMessage>
 
         await using Stream stream = WebSocketStream.Create(webSocket, WebSocketMessageType.Binary);
         await DirectoryPacker.PackDirectoryAsync(getPathResult.Value, stream, cancellationToken);
-        return false;
     }
 }
