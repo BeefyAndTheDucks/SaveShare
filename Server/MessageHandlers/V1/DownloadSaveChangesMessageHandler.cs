@@ -36,6 +36,7 @@ public class DownloadSaveChangesMessageHandler : MessageHandler<C2SDownloadSaveC
         await DirectoryPacker.CreateDeltasAsync(getPathResult.Value, stream, stream, serverManifest, message.ClientSideManifest, progress, async (byteSize, ct) =>
         {
             await MessageHelpers.SendMessage(new S2CReadyToSendBinaryDataMessage(byteSize), webSocket, ct);
+            await MessageHelpers.AwaitResponse<C2SReadyForBinaryDataMessage>(webSocket, ct);
         }, cancellationToken);
 
         return false;
