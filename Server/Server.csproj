@@ -38,5 +38,13 @@
         <AssemblyName>$(MSBuildProjectName)-$(_RuntimeOS)-$(_RuntimeArch)</AssemblyName>
         <TargetName>$(MSBuildProjectName)-$(_RuntimeOS)-$(_RuntimeArch)</TargetName>
     </PropertyGroup>
+    
+    <ItemGroup>
+        <ProjectReference 
+                Include="..\Server.Generators\Server.Generators.csproj"
+                OutputItemType="Analyzer"
+                ReferenceOutputAssembly="false"
+        />
+    </ItemGroup>
 
 </Project>

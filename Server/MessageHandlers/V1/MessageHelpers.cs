@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Server.MessageHandlers.V1;
 
-public static class MessageHandlerFactory
+public static partial class MessageHandlerFactory
 {
     private static MessageHandler[] MessageHandlers
     {
@@ -18,22 +18,11 @@ public static class MessageHandlerFactory
             if (field is not null)
                 return field;
             
-            Stopwatch sw = Stopwatch.StartNew();
-            
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            field = assemblies
-                .SelectMany(assembly => assembly.GetTypes())
-                .Where(t => typeof(MessageHandler).IsAssignableFrom(t))
-                .Where(t => t is { IsAbstract: false, IsInterface: false })
-                .Select(t => Activator.CreateInstance(t) as MessageHandler)
-                .Where(inst => inst != null)
-                .ToArray()!;
-            
-            Console.WriteLine($"Loaded {field.Length} message handlers in {sw.ElapsedMilliseconds}ms");
-            
-            return field;
+            return field = GetMessageHandlers();
         }
     }
+    
+    private static partial MessageHandler[] GetMessageHandlers();
     
     public static async Task Handle(JObject messageJObject, WebSocket ws, CancellationToken ct = default)
     {
