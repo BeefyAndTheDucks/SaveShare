@@ -28,6 +28,8 @@ public sealed class ErrorPresenter(IModalService modalService) : IErrorPresenter
                 ("Unexpected Error", exception.Message)
         };
         
+        Console.Error.WriteLine(exception);
+        
         await modalService.ShowAsync(
             title,
             message,

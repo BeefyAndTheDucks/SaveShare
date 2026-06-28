@@ -10,7 +10,16 @@ public class FileMetadata
     {
         XxHash3 hasher = new();
 
-        await using (FileStream fs = File.OpenRead(path))
+        FileStreamOptions options = new()
+        {
+            Mode = FileMode.Open,
+            Access = FileAccess.Read,
+            Share = FileShare.Read,
+            BufferSize = 1024 * 1024,
+            Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
+        };
+        
+        await using (FileStream fs = File.Open(path, options))
         {
             await hasher.AppendAsync(fs, ct);
         }
