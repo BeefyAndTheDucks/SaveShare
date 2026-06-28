@@ -255,7 +255,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         double index = 0;
         const int numSteps = 6;
-        LocalSaveViewModelProgress createManifestProgress = new(vm, index++ / numSteps, index / numSteps, "Server - Building manifest...");
+        LocalSaveViewModelProgress createManifestProgress = new(vm, index++ / numSteps, index / numSteps, "Building manifests...");
         LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index++ / numSteps, index / numSteps, "Building signatures...");
         LocalSaveViewModelProgress sendSignaturesProgress = new(vm, index++ / numSteps, index / numSteps, "Sending signatures...");
         LocalSaveViewModelProgress buildDeltasProgress = new(vm, index++ / numSteps, index / numSteps, "Server - Building deltas...");
@@ -280,7 +280,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         double index = 0;
         const int numSteps = 6;
-        LocalSaveViewModelProgress buildManifestProgress = new(vm, index++ / numSteps, index / numSteps, "Building manifest...");
+        LocalSaveViewModelProgress buildManifestProgress = new(vm, index++ / numSteps, index / numSteps, "Building manifests...");
         LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index++ / numSteps, index / numSteps, "Server - Building signatures...");
         LocalSaveViewModelProgress receiveSignaturesProgress = new(vm, index++ / numSteps, index / numSteps, "Receiving signatures...");
         LocalSaveViewModelProgress buildDeltasProgress = new(vm, index++ / numSteps, index / numSteps, "Building deltas...");
