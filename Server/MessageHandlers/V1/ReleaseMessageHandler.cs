@@ -1,8 +1,11 @@
 using System.Net.WebSockets;
 using Common;
+using Common.Protocol.V1;
+using JetBrains.Annotations;
 
 namespace Server.MessageHandlers.V1;
 
+[UsedImplicitly]
 public class ReleaseMessageHandler : MessageHandler<C2SReleaseMessage>
 {
     protected override async Task Handle(C2SReleaseMessage message, WebSocket webSocket,

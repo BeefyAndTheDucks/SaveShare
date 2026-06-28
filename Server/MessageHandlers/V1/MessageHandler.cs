@@ -1,5 +1,6 @@
 using System.Net.WebSockets;
 using Common;
+using Common.Protocol.V1;
 using Newtonsoft.Json.Linq;
 
 namespace Server.MessageHandlers.V1;

@@ -1,8 +1,11 @@
 using System.Net.WebSockets;
 using Common;
+using Common.Protocol.V1;
+using JetBrains.Annotations;
 
 namespace Server.MessageHandlers.V1;
 
+[UsedImplicitly]
 public class UploadSaveChangesMessageHandler : MessageHandler<C2SUploadSaveChangesMessage>
 {
     protected override async Task Handle(C2SUploadSaveChangesMessage message, WebSocket webSocket,

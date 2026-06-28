@@ -1,5 +1,5 @@
 using System;
-using Common;
+using Common.Protocol.V1;
 
 namespace Client.Exceptions;
 

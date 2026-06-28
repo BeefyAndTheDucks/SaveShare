@@ -1,9 +1,12 @@
 using System.Net.WebSockets;
 using Common;
+using Common.Protocol.V1;
+using JetBrains.Annotations;
 using WebSocketStream = System.Net.WebSockets.WebSocketStream;
 
 namespace Server.MessageHandlers.V1;
 
+[UsedImplicitly]
 public class OverwriteSaveDataMessageHandler : MessageHandler<C2SOverwriteSaveDataMessage>
 {
     protected override async Task Handle(C2SOverwriteSaveDataMessage message, WebSocket webSocket,

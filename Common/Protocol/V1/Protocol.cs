@@ -1,6 +1,4 @@
-using System.Reflection;
-
-namespace Common;
+namespace Common.Protocol.V1;
 
 public enum S2CMessageType
 {
@@ -157,53 +155,3 @@ public record C2SDownloadSaveChangesMessage(SaveId SaveId, DirectoryManifest Cli
 
 [C2SMessageType(C2SMessageType.UploadSaveChanges)]
 public record C2SUploadSaveChangesMessage(SaveId SaveId, DirectoryManifest ClientSideManifest) : C2SMessage(C2SMessageType.UploadSaveChanges);
-
-[C2SMessageType(C2SMessageType.Unknown)]
-
-[AttributeUsage(AttributeTargets.Class, Inherited = false)]
-public sealed class C2SMessageTypeAttribute(C2SMessageType type) : Attribute
-{
-    public C2SMessageType Type { get; } = type;
-}
-
-[AttributeUsage(AttributeTargets.Class, Inherited = false)]
-public sealed class S2CMessageTypeAttribute(S2CMessageType type) : Attribute
-{
-    public S2CMessageType Type { get; } = type;
-}
-
-public static class MessageTypeHelpers
-{
-    public static IReadOnlyDictionary<TEnum, Type> BuildMessageTypeMap<TBase, TAttribute, TEnum>(
-        Func<TAttribute, TEnum> getMessageType)
-        where TAttribute : Attribute
-        where TBase : class
-        where TEnum : struct, Enum
-    {
-        Type[] messageTypes = typeof(TBase)
-            .Assembly
-            .GetTypes()
-            .Where(type =>
-                !type.IsAbstract &&
-                typeof(TBase).IsAssignableFrom(type))
-            .ToArray();
-
-        var entries = messageTypes
-            .Select(type => new
-            {
-                MessageClass = type,
-                Attribute = type.GetCustomAttribute<TAttribute>()
-            })
-            .Where(x => x.Attribute is not null)
-            .Select(x => new
-            {
-                x.MessageClass,
-                MessageType = getMessageType(x.Attribute!)
-            })
-            .ToArray();
-
-        return entries.ToDictionary(
-            x => x.MessageType,
-            x => x.MessageClass);
-    }
-}

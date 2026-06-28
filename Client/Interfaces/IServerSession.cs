@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
+using Common.Protocol.V1;
 
 namespace Client.Interfaces;
 

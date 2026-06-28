@@ -1,6 +1,9 @@
+using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using Common;
+using Common.Protocol;
+using Common.Protocol.V1;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -8,20 +11,29 @@ namespace Server.MessageHandlers.V1;
 
 public static class MessageHandlerFactory
 {
-    private static readonly List<MessageHandler> MessageHandlers =
-    [
-        new SignInAsNewUserMessageHandler(),
-        new SignInAsExistingUserMessageHandler(),
-        new ListSavesMessageHandler(),
-        new ForceReleaseMessageHandler(),
-        new ReleaseMessageHandler(),
-        new RegisterNewSaveMessageHandler(),
-        new OverwriteSaveDataMessageHandler(),
-        new CheckoutSaveMessageHandler(),
-        new DownloadSaveMessageHandler(),
-        new DownloadSaveChangesMessageHandler(),
-        new UploadSaveChangesMessageHandler(),
-    ];
+    private static MessageHandler[] MessageHandlers
+    {
+        get
+        {
+            if (field is not null)
+                return field;
+            
+            Stopwatch sw = Stopwatch.StartNew();
+            
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            field = assemblies
+                .SelectMany(assembly => assembly.GetTypes())
+                .Where(t => typeof(MessageHandler).IsAssignableFrom(t))
+                .Where(t => t is { IsAbstract: false, IsInterface: false })
+                .Select(t => Activator.CreateInstance(t) as MessageHandler)
+                .Where(inst => inst != null)
+                .ToArray()!;
+            
+            Console.WriteLine($"Loaded {field.Length} message handlers in {sw.ElapsedMilliseconds}ms");
+            
+            return field;
+        }
+    }
     
     public static async Task Handle(JObject messageJObject, WebSocket ws, CancellationToken ct = default)
     {

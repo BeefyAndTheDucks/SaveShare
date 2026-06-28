@@ -1,13 +1,7 @@
 ﻿using Avalonia;
 using System;
 using System.CommandLine;
-using System.Threading.Tasks;
 using Client.Commands;
-using Client.Interfaces;
-using Client.Networking;
-using Client.ViewModels;
-using Client.Views;
-using Common;
 
 namespace Client;
 

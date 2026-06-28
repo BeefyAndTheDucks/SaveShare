@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using Common;
+using Common.Protocol.V1;
 using Newtonsoft.Json.Linq;
 using Server.MessageHandlers.V1;
 

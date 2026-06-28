@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Client.Exceptions;
 using Client.Interfaces;
 using Common;
+using Common.Protocol.V1;
 
 namespace Client.Networking;
 
