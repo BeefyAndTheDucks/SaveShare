@@ -131,7 +131,7 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
 
             ByteProgressToNormalizedProgress? sendProgress = ByteProgressToNormalizedProgress.From(sendSignaturesProgress, 999999);
 
-            AggregateProgress? buildManifestAggregateProgress = AggregateProgress.From(createManifestProgress);
+            AggregateProgress? buildManifestAggregateProgress = AggregateProgress.From(createManifestProgress, 2);
         
             DirectoryManifest? cloudManifest = null;
             DirectoryManifest localManifest = await DirectoryManifest.From(localSaveInfo.LocalPath, buildManifestAggregateProgress?.CreateProgressItem(), cancellationToken);
@@ -178,7 +178,7 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
         
             ByteProgressToNormalizedProgress? sendProgress = ByteProgressToNormalizedProgress.From(sendDeltasProgress, 999999);
         
-            AggregateProgress? buildManifestAggregateProgress = AggregateProgress.From(buildManifestProgress);
+            AggregateProgress? buildManifestAggregateProgress = AggregateProgress.From(buildManifestProgress, 2);
         
             DirectoryManifest? cloudManifest = null;
             DirectoryManifest localManifest = await DirectoryManifest.From(localSaveInfo.LocalPath, buildManifestAggregateProgress?.CreateProgressItem(), cancellationToken);

@@ -1,13 +1,13 @@
 namespace Common;
 
-public class AggregateProgress(IProgress<double> outputProgress)
+public class AggregateProgress(IProgress<double> outputProgress, int initialItemCount = 0)
 {
     private readonly Lock _lock = new();
-    private readonly List<AggregateProgressItem> _items = [];
+    private readonly List<AggregateProgressItem> _items = new(initialItemCount);
 
-    public static AggregateProgress? From(IProgress<double>? outputProgress)
+    public static AggregateProgress? From(IProgress<double>? outputProgress, int initialItemCount = 0)
     {
-        return outputProgress != null ? new AggregateProgress(outputProgress) : null;
+        return outputProgress != null ? new AggregateProgress(outputProgress, initialItemCount) : null;
     }
     
     public IProgress<double> CreateProgressItem()
@@ -29,7 +29,7 @@ public class AggregateProgress(IProgress<double> outputProgress)
 
         lock (_lock)
         {
-            average = _items.Average(x => x.Progress);
+            average = _items.Sum(x => x.Progress) / Math.Max(initialItemCount, _items.Count);
         }
         
         outputProgress.Report(average);
