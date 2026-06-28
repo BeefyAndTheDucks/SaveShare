@@ -12,5 +12,15 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = windowViewModel;
+        
+        Closing += OnClosing;
+    }
+
+    private void OnClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+            return;
+
+        e.Cancel = viewModel.IsBusy;
     }
 }

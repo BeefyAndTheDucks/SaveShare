@@ -39,6 +39,8 @@ public partial class MainWindowViewModel : ViewModelBase
     
     private readonly Dictionary<string, LocalSaveInfoViewModel> _pendingSaves = new(StringComparer.OrdinalIgnoreCase);
 
+    public bool IsBusy => _saveSyncService.IsBusy;
+
     public MainWindowViewModel()
     {
         _authenticationService = null!;
