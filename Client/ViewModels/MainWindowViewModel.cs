@@ -252,14 +252,16 @@ public partial class MainWindowViewModel : ViewModelBase
         vm.CurrentSubOperationIndeterminate = true;
 
         double index = 0;
-        LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index++ / 5, index / 5, "Building signatures...");
-        LocalSaveViewModelProgress sendSignaturesProgress = new(vm, index++ / 5, index / 5, "Sending signatures...");
-        LocalSaveViewModelProgress buildDeltasProgress = new(vm, index++ / 5, index / 5, "Server - Building deltas...");
-        LocalSaveViewModelProgress receiveDeltasProgress = new(vm, index++ / 5, index / 5, "Receiving deltas...");
-        LocalSaveViewModelProgress applyDeltasProgress = new(vm, index++ / 5, index / 5, "Applying deltas...");
+        const int numSteps = 6;
+        LocalSaveViewModelProgress createManifestProgress = new(vm, index++ / numSteps, index / numSteps, "Server - Building manifest...");
+        LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index++ / numSteps, index / numSteps, "Building signatures...");
+        LocalSaveViewModelProgress sendSignaturesProgress = new(vm, index++ / numSteps, index / numSteps, "Sending signatures...");
+        LocalSaveViewModelProgress buildDeltasProgress = new(vm, index++ / numSteps, index / numSteps, "Server - Building deltas...");
+        LocalSaveViewModelProgress receiveDeltasProgress = new(vm, index++ / numSteps, index / numSteps, "Receiving deltas...");
+        LocalSaveViewModelProgress applyDeltasProgress = new(vm, index++ / numSteps, index / numSteps, "Applying deltas...");
 
         await _taskRunner.RunAsync(
-            ct => _saveSyncService.DownloadCloudSaveChangesAsync(vm.Id, buildSignaturesProgress, sendSignaturesProgress,
+            ct => _saveSyncService.DownloadCloudSaveChangesAsync(vm.Id, createManifestProgress, buildSignaturesProgress, sendSignaturesProgress,
                 buildDeltasProgress, receiveDeltasProgress, applyDeltasProgress, ct), 
             cancellationToken);
         
@@ -275,14 +277,16 @@ public partial class MainWindowViewModel : ViewModelBase
         vm.CurrentSubOperationIndeterminate = true;
 
         double index = 0;
-        LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index++ / 5, index / 5, "Server - Building signatures...");
-        LocalSaveViewModelProgress receiveSignaturesProgress = new(vm, index++ / 5, index / 5, "Receiving signatures...");
-        LocalSaveViewModelProgress buildDeltasProgress = new(vm, index++ / 5, index / 5, "Building deltas...");
-        LocalSaveViewModelProgress sendDeltasProgress = new(vm, index++ / 5, index / 5, "Sending deltas...");
-        LocalSaveViewModelProgress applyDeltasProgress = new(vm, index++ / 5, index / 5, "Server - Applying deltas...");
+        const int numSteps = 6;
+        LocalSaveViewModelProgress buildManifestProgress = new(vm, index++ / numSteps, index / numSteps, "Building manifest...");
+        LocalSaveViewModelProgress buildSignaturesProgress = new(vm, index++ / numSteps, index / numSteps, "Server - Building signatures...");
+        LocalSaveViewModelProgress receiveSignaturesProgress = new(vm, index++ / numSteps, index / numSteps, "Receiving signatures...");
+        LocalSaveViewModelProgress buildDeltasProgress = new(vm, index++ / numSteps, index / numSteps, "Building deltas...");
+        LocalSaveViewModelProgress sendDeltasProgress = new(vm, index++ / numSteps, index / numSteps, "Sending deltas...");
+        LocalSaveViewModelProgress applyDeltasProgress = new(vm, index++ / numSteps, index / numSteps, "Server - Applying deltas...");
         
         await _taskRunner.RunAsync(
-            ct => _saveSyncService.UploadLocalSaveChangesAsync(vm.Id, buildSignaturesProgress,
+            ct => _saveSyncService.UploadLocalSaveChangesAsync(vm.Id, buildManifestProgress, buildSignaturesProgress,
                 receiveSignaturesProgress, buildDeltasProgress, sendDeltasProgress, applyDeltasProgress, ct),
             cancellationToken);
         

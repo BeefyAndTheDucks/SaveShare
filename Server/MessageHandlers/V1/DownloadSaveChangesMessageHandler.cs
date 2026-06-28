@@ -27,11 +27,13 @@ public class DownloadSaveChangesMessageHandler : MessageHandler<C2SDownloadSaveC
             await Error(ErrorCode.SaveFilesMissing, getPathResult.Error, webSocket, cancellationToken);
             return false;
         }
-            
+        
+        DirectoryManifest serverManifest = await DirectoryManifest.From(getPathResult.Value, new MessageHelpers.MessageProgress(webSocket, cancellationToken), cancellationToken);
+        await MessageHelpers.SendMessage(new S2CSaveManifestMessage(serverManifest), webSocket, cancellationToken);
         await MessageHelpers.SendMessage(new S2CReadyForBinaryDataMessage(), webSocket, cancellationToken);
         await using Stream stream = WebSocketStream.Create(webSocket, WebSocketMessageType.Binary);
         IProgress<double> progress = new MessageHelpers.MessageProgress(webSocket, cancellationToken);
-        await DirectoryPacker.CreateDeltasAsync(getPathResult.Value, stream, stream, progress, async (byteSize, ct) =>
+        await DirectoryPacker.CreateDeltasAsync(getPathResult.Value, stream, stream, serverManifest, message.ClientSideManifest, progress, async (byteSize, ct) =>
         {
             await MessageHelpers.SendMessage(new S2CReadyToSendBinaryDataMessage(byteSize), webSocket, ct);
         }, cancellationToken);

@@ -56,16 +56,22 @@ public interface IServerSession
         CancellationToken cancellationToken = default);
 
     Task DownloadSaveChangesAsync(SaveId saveId,
+        DirectoryManifest localManifest,
+        Action<DirectoryManifest> onManifestReceived,
         Func<Stream, CancellationToken, Task> readSignaturesDataAsync,
         Func<Stream, CancellationToken, Task> writeDeltasDataAsync,
-        IProgress<long>? sendSignaturesProgress, 
+        IProgress<double>? createManifestProgress,
+        IProgress<long>? sendSignaturesProgress,
         IProgress<double>? createDeltasProgress,
         Func<long, IProgress<long>?>? receiveDeltasProgress,
         CancellationToken cancellationToken = default);
 
     Task UploadSaveChangesAsync(SaveId saveId,
+        DirectoryManifest manifest,
+        Action<DirectoryManifest> onManifestReceived,
         Func<Stream, CancellationToken, Task> readSignaturesAsync,
         Func<Stream, CancellationToken, Task> writeDeltasAsync,
+        IProgress<double>? createManifestProgress,
         IProgress<double>? createSignaturesProgress,
         Func<long, IProgress<long>?>? receiveSignaturesProgress,
         IProgress<long>? sendDeltasProgress,

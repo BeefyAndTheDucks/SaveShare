@@ -1,5 +1,4 @@
 using Octodiff.Core;
-using Octodiff.Diagnostics;
 using SharpCompress.Common;
 using SharpCompress.Compressors.ZStandard;
 using SharpCompress.Readers;
@@ -89,29 +88,46 @@ public static class DirectoryPacker
         }
     }
 
-    public static async Task BuildAndPackSignaturesAsync(string oldFilesPath, Func<Stream> output, IProgress<double>? createSignaturesProgress, Func<long, CancellationToken, Task>? onByteSizeCalculated = null, bool ownsStream = false, CancellationToken ct = default)
+    public static async Task BuildAndPackSignaturesAsync(string oldFilesPath, Func<Stream> output, DirectoryManifest newFilesManifest, DirectoryManifest oldFilesManifest, IProgress<double>? createSignaturesProgress, Func<long, CancellationToken, Task>? onByteSizeCalculated = null, bool ownsStream = false, CancellationToken ct = default)
     {
         string signaturesPath = GetSignatureDirectory(oldFilesPath);
         Directory.CreateDirectory(signaturesPath);
         
         try
         {
-            string[] files = Directory.GetFiles(oldFilesPath, "*", SearchOption.AllDirectories);
-            SignatureBuilder signatureBuilder = new();
-            for (int i = 0; i < files.Length; i++)
-            {
-                string relativeFilePath = Path.GetRelativePath(oldFilesPath, files[i]);
-                string signatureFilePath = Path.Combine(signaturesPath, relativeFilePath + k_SignatureFileExtension);
-                string? signatureOutputDirectory = Path.GetDirectoryName(signatureFilePath);
-                if(!Directory.Exists(signatureOutputDirectory))
-                    Directory.CreateDirectory(signatureOutputDirectory!);
-                await using (FileStream basisStream = new(files[i], FileMode.Open, FileAccess.Read, FileShare.Read))
-                await using (FileStream signatureStream = new(signatureFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            string[] changedFiles = Directory.EnumerateFiles(oldFilesPath, "*", SearchOption.AllDirectories)
+                .Where(filePath =>
                 {
-                    signatureBuilder.Build(basisStream, new SignatureWriter(signatureStream));
+                    string relativeFilePath = Path.GetRelativePath(oldFilesPath, filePath);
+                    FileMetadata oldFileMetadata = oldFilesManifest.Metadata[relativeFilePath];
+                    if (!newFilesManifest.Metadata.TryGetValue(relativeFilePath, out FileMetadata? newFileMetadata))
+                        return false;
+                    
+                    return oldFileMetadata.Hash != newFileMetadata.Hash;
+                })
+                .ToArray();
+            
+            SignatureBuilder signatureBuilder = new();
+            for (int i = 0; i < changedFiles.Length; i++)
+            {
+                string relativeFilePath = Path.GetRelativePath(oldFilesPath, changedFiles[i]);
+                FileMetadata localFileMetadata = await FileMetadata.From(changedFiles[i], ct);
+                bool existsOnOtherEnd = newFilesManifest.Metadata.TryGetValue(relativeFilePath, out FileMetadata? otherEndMetadata);
+                
+                if (existsOnOtherEnd && otherEndMetadata!.Hash != localFileMetadata.Hash)
+                {
+                    string signatureFilePath = Path.Combine(signaturesPath, relativeFilePath + k_SignatureFileExtension);
+                    string? signatureOutputDirectory = Path.GetDirectoryName(signatureFilePath);
+                    if(!Directory.Exists(signatureOutputDirectory))
+                        Directory.CreateDirectory(signatureOutputDirectory!);
+                    await using (FileStream basisStream = new(changedFiles[i], FileMode.Open, FileAccess.Read, FileShare.Read))
+                    await using (FileStream signatureStream = new(signatureFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                    {
+                        signatureBuilder.Build(basisStream, new SignatureWriter(signatureStream));
+                    }
                 }
             
-                createSignaturesProgress?.Report(((double)i + 1) / files.Length);
+                createSignaturesProgress?.Report(((double)i + 1) / changedFiles.Length);
             }
         
             if (onByteSizeCalculated != null)
@@ -127,7 +143,7 @@ public static class DirectoryPacker
         }
     }
 
-    public static async Task CreateDeltasAsync(string updatedFilesPath, Stream signaturesInput, Stream deltasOutput, IProgress<double>? createDeltasProgress, Func<long, CancellationToken, Task>? onByteSizeCalculated = null, CancellationToken ct = default)
+    public static async Task CreateDeltasAsync(string updatedFilesPath, Stream signaturesInput, Stream deltasOutput, DirectoryManifest newFilesManifest, DirectoryManifest oldFilesManifest, IProgress<double>? createDeltasProgress, Func<long, CancellationToken, Task>? onByteSizeCalculated = null, CancellationToken ct = default)
     {
         string signaturesPath = GetSignatureDirectory(updatedFilesPath);
         string deltasPath = GetDeltasDirectory(updatedFilesPath);
@@ -139,7 +155,17 @@ public static class DirectoryPacker
         {
             await UnpackDirectoryAsync(signaturesInput, signaturesPath, updatedFilesPath, ct);
 
-            string[] updatedFiles = Directory.GetFiles(updatedFilesPath, "*", SearchOption.AllDirectories);
+            string[] updatedFiles = Directory.EnumerateFiles(updatedFilesPath, "*", SearchOption.AllDirectories)
+                .Where(filePath =>
+                {
+                    string relativeFilePath = Path.GetRelativePath(updatedFilesPath, filePath);
+                    FileMetadata newFileMetadata = newFilesManifest.Metadata[relativeFilePath];
+                    if (!oldFilesManifest.Metadata.TryGetValue(relativeFilePath, out FileMetadata? oldFileMetadata))
+                        return true;
+                    
+                    return newFileMetadata.Hash != oldFileMetadata.Hash;
+                })
+                .ToArray();
             DeltaBuilder deltaBuilder = new();
 
             List<string> newFiles = [];
@@ -198,7 +224,7 @@ public static class DirectoryPacker
         }
     }
 
-    public static async Task ApplyDeltasAsync(string oldFilesPath, Stream deltasInput, IProgress<double>? applyDeltasProgress, CancellationToken ct = default)
+    public static async Task ApplyDeltasAsync(string oldFilesPath, Stream deltasInput, DirectoryManifest newFilesManifest, DirectoryManifest oldFilesManifest, IProgress<double>? applyDeltasProgress, CancellationToken ct = default)
     {
         string deltasPath = GetDeltasDirectory(oldFilesPath);
         string updatedFilesPath = GetUpdatedFilesDirectory(oldFilesPath);
@@ -212,9 +238,26 @@ public static class DirectoryPacker
             await UnpackDirectoryAsync(deltasInput, deltasPath, oldFilesPath, ct);
             
             string[] deltaFiles = Directory.GetFiles(deltasPath, "*", SearchOption.AllDirectories);
+            
+            string[] nonModifiedFiles = newFilesManifest.Metadata
+                .Where(kv =>
+                {
+                    string relativeFilePath = kv.Key;
+                    FileMetadata newFileMetadata = kv.Value;
+                    if (!oldFilesManifest.Metadata.TryGetValue(relativeFilePath, out FileMetadata? oldFileMetadata))
+                        return false;
+
+                    return newFileMetadata.Hash == oldFileMetadata.Hash;
+                })
+                .Select(kv => kv.Key)
+                .ToArray();
+            
+            int filesToProcess = deltaFiles.Length + nonModifiedFiles.Length;
+            
             for (int i = 0; i < deltaFiles.Length; i++)
             {
-                string relativePath = Path.GetRelativePath(deltasPath, deltaFiles[i]);
+                string deltaFile = deltaFiles[i];
+                string relativePath = Path.GetRelativePath(deltasPath, deltaFile);
                 string dir = Path.GetDirectoryName(relativePath) ?? "";
                 string name = Path.GetFileNameWithoutExtension(relativePath);
                 string destinationPath = Path.Combine(updatedFilesPath, dir, name);
@@ -227,7 +270,10 @@ public static class DirectoryPacker
                     if (!Directory.Exists(directoryName))
                         Directory.CreateDirectory(directoryName);
                     
-                    File.Copy(deltaFiles[i], destinationFile, true);
+                    File.Copy(deltaFile, destinationFile, true);
+                    
+                    applyDeltasProgress?.Report(((double)i + 1) / filesToProcess);
+                    
                     continue;
                 }
                 
@@ -236,13 +282,26 @@ public static class DirectoryPacker
                     Directory.CreateDirectory(updatedFileOutputDirectory);
                 DeltaApplier deltaApplier = new();
                 await using(FileStream basisStream = new(oldFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                await using(FileStream deltaStream = new(deltaFiles[i], FileMode.Open, FileAccess.Read, FileShare.Read))
+                await using(FileStream deltaStream = new(deltaFile, FileMode.Open, FileAccess.Read, FileShare.Read))
                 await using(FileStream newFileStream = new(destinationPath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
                 {
-                    deltaApplier.Apply(basisStream, new BinaryDeltaReader(deltaStream, AbsoluteProgressReporter.From(applyDeltasProgress, (double)i / deltaFiles.Length, (double)(i+1) / deltaFiles.Length)), newFileStream);
+                    deltaApplier.Apply(basisStream, new BinaryDeltaReader(deltaStream, AbsoluteProgressReporter.From(applyDeltasProgress, (double)i / filesToProcess, (double)(i+1) / filesToProcess)), newFileStream);
                 }
                 
-                applyDeltasProgress?.Report(((double)i + 1) / deltaFiles.Length);
+                applyDeltasProgress?.Report(((double)i + 1) / filesToProcess);
+            }
+
+            for (int i = 0; i < nonModifiedFiles.Length; i++)
+            {
+                string relativePath = nonModifiedFiles[i];
+                string sourcePath = Path.Combine(oldFilesPath, relativePath);
+                string destinationPath = Path.Combine(updatedFilesPath, relativePath);
+                string? destinationDirectory = Path.GetDirectoryName(destinationPath);
+                if (!Directory.Exists(destinationDirectory) && destinationDirectory != null)
+                    Directory.CreateDirectory(destinationDirectory);
+                File.Copy(sourcePath, destinationPath, true);
+                
+                applyDeltasProgress?.Report(((double)i + 1 + deltaFiles.Length) / filesToProcess);
             }
             
             Directory.Move(oldFilesPath, backupPath);

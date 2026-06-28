@@ -19,7 +19,9 @@ public enum S2CMessageType
     ReadyForBinaryData,
     ReadyToSendBinaryData,
     
-    Progress
+    Progress,
+    
+    SaveManifest,
 }
 public abstract record S2CMessage (S2CMessageType Type);
 
@@ -61,6 +63,9 @@ public record S2CSaveListMessage(SaveInfo[] Saves) : S2CMessage(S2CMessageType.S
 
 [S2CMessageType(S2CMessageType.GotSaveInfo)]
 public record S2CGotSaveInfoMessage(SaveInfo Save) : S2CMessage(S2CMessageType.GotSaveInfo);
+
+[S2CMessageType(S2CMessageType.SaveManifest)]
+public record S2CSaveManifestMessage(DirectoryManifest Manifest) : S2CMessage(S2CMessageType.SaveManifest);
 
 [S2CMessageType(S2CMessageType.RegisteredNewSave)]
 public record S2CRegisteredNewSaveMessage(SaveInfo CreatedSaveInfo) : S2CMessage(S2CMessageType.RegisteredNewSave);
@@ -148,11 +153,12 @@ public record C2SReadyForBinaryDataMessage() : C2SMessage(C2SMessageType.ReadyFo
 public record C2SReadyToSendBinaryDataMessage() : C2SMessage(C2SMessageType.ReadyToSendBinaryData);
 
 [C2SMessageType(C2SMessageType.DownloadSaveChanges)]
-public record C2SDownloadSaveChangesMessage(SaveId SaveId) : C2SMessage(C2SMessageType.DownloadSaveChanges);
+public record C2SDownloadSaveChangesMessage(SaveId SaveId, DirectoryManifest ClientSideManifest) : C2SMessage(C2SMessageType.DownloadSaveChanges);
 
 [C2SMessageType(C2SMessageType.UploadSaveChanges)]
-public record C2SUploadSaveChangesMessage(SaveId SaveId) : C2SMessage(C2SMessageType.UploadSaveChanges);
+public record C2SUploadSaveChangesMessage(SaveId SaveId, DirectoryManifest ClientSideManifest) : C2SMessage(C2SMessageType.UploadSaveChanges);
 
+[C2SMessageType(C2SMessageType.Unknown)]
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public sealed class C2SMessageTypeAttribute(C2SMessageType type) : Attribute

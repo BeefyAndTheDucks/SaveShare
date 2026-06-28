@@ -220,17 +220,23 @@ public sealed class ServerSession(ITransport transport) : IServerSession
     }
 
     public async Task DownloadSaveChangesAsync(SaveId saveId,
+        DirectoryManifest localManifest,
+        Action<DirectoryManifest> onManifestReceived,
         Func<Stream, CancellationToken, Task> readSignaturesDataAsync,
         Func<Stream, CancellationToken, Task> writeDeltasDataAsync,
-        IProgress<long>? sendSignaturesProgress, 
-        IProgress<double>? createDeltasProgress, 
+        IProgress<double>? createManifestProgress,
+        IProgress<long>? sendSignaturesProgress,
+        IProgress<double>? createDeltasProgress,
         Func<long, IProgress<long>?>? receiveDeltasProgress,
         CancellationToken cancellationToken = default)
     {
         await _operationLock.WaitAsync(cancellationToken);
         try
         {
-            await SendAndExpectAsync<S2CReadyForBinaryDataMessage>(new C2SDownloadSaveChangesMessage(saveId), cancellationToken);
+            await transport.SendMessageAsync(new C2SDownloadSaveChangesMessage(saveId, localManifest), cancellationToken);
+            S2CSaveManifestMessage saveManifestMessage = await ExpectManyAsync<S2CProgressMessage, S2CSaveManifestMessage>(msg => createManifestProgress?.Report(msg.Progress), cancellationToken);
+            onManifestReceived(saveManifestMessage.Manifest);
+            await ExpectAsync<S2CReadyForBinaryDataMessage>(cancellationToken);
             await transport.SendBinaryAsync(readSignaturesDataAsync, sendSignaturesProgress, cancellationToken);
             S2CReadyToSendBinaryDataMessage readyToSendMessage =
                 await ExpectManyAsync<S2CProgressMessage, S2CReadyToSendBinaryDataMessage>(
@@ -245,8 +251,11 @@ public sealed class ServerSession(ITransport transport) : IServerSession
     }
 
     public async Task UploadSaveChangesAsync(SaveId saveId,
+        DirectoryManifest manifest,
+        Action<DirectoryManifest> onManifestReceived,
         Func<Stream, CancellationToken, Task> readSignaturesAsync,
         Func<Stream, CancellationToken, Task> writeDeltasAsync,
+        IProgress<double>? createManifestProgress,
         IProgress<double>? createSignaturesProgress, Func<long, IProgress<long>?>? receiveSignaturesProgress,
         IProgress<long>? sendDeltasProgress, IProgress<double>? applyDeltasProgress,
         CancellationToken cancellationToken = default)
@@ -254,7 +263,9 @@ public sealed class ServerSession(ITransport transport) : IServerSession
         await _operationLock.WaitAsync(cancellationToken);
         try
         {
-            await transport.SendMessageAsync(new C2SUploadSaveChangesMessage(saveId), cancellationToken);
+            await transport.SendMessageAsync(new C2SUploadSaveChangesMessage(saveId, manifest), cancellationToken);
+            S2CSaveManifestMessage saveManifestMessage = await ExpectManyAsync<S2CProgressMessage, S2CSaveManifestMessage>(msg => createManifestProgress?.Report(msg.Progress), cancellationToken);
+            onManifestReceived(saveManifestMessage.Manifest);
             S2CReadyToSendBinaryDataMessage readyToSendMessage =
                 await ExpectManyAsync<S2CProgressMessage, S2CReadyToSendBinaryDataMessage>(
                     msg => createSignaturesProgress?.Report(msg.Progress), cancellationToken);

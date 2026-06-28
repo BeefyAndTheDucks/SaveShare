@@ -32,8 +32,8 @@ public interface ISaveSyncService
         SaveId saveId,
         CancellationToken cancellationToken = default);
     
-    Task DownloadCloudSaveChangesAsync(
-        SaveId saveId,
+    Task DownloadCloudSaveChangesAsync(SaveId saveId,
+        IProgress<double>? createManifestProgress = null,
         IProgress<double>? buildSignaturesProgress = null,
         IProgress<double>? sendSignaturesProgress = null,
         IProgress<double>? buildDeltasProgress = null,
@@ -41,8 +41,8 @@ public interface ISaveSyncService
         IProgress<double>? applyDeltasProgress = null,
         CancellationToken cancellationToken = default);
     
-    Task UploadLocalSaveChangesAsync(
-        SaveId saveId,
+    Task UploadLocalSaveChangesAsync(SaveId saveId,
+        IProgress<double>? buildManifestProgress = null,
         IProgress<double>? buildSignaturesProgress = null,
         IProgress<double>? receiveSignaturesProgress = null,
         IProgress<double>? buildDeltasProgress = null,
