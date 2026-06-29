@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
@@ -7,6 +8,9 @@ public static class NativeAudio
 {
     public static void PlayAlertSound()
     {
+        if (AppDomain.CurrentDomain.FriendlyName.Contains("ReSharper") || Console.IsOutputRedirected)
+            return; // Don't play sounds in testing environments such as ReSharper or unit tests.
+        
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             System.Media.SystemSounds.Hand.Play();
