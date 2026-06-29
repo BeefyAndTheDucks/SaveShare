@@ -21,6 +21,6 @@ public sealed class FolderPickerService(IMainWindowProvider mainWindowProvider) 
 
         IStorageFolder? folder = folders.FirstOrDefault();
         
-        return folder?.Path.AbsolutePath;
+        return folder?.TryGetLocalPath();
     }
 }
