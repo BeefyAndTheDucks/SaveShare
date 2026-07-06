@@ -36,6 +36,11 @@
 
         <_RuntimeOS Condition="'$(_RuntimeOS)' == 'win'">Windows</_RuntimeOS>
         <_RuntimeOS Condition="'$(_RuntimeOS)' == 'linux'">Linux</_RuntimeOS>
+        <_RuntimeOS Condition="'$(_RuntimeOS)' == 'osx'">MacOS</_RuntimeOS>
+
+        <_RuntimeArch Condition="'$(_RuntimeArch)' == 'arm64'">Arm64</_RuntimeArch>
+        <_RuntimeArch Condition="'$(_RuntimeArch)' == 'x64'">x64</_RuntimeArch>
+        <_RuntimeArch Condition="'$(_RuntimeArch)' == 'x86'">x86</_RuntimeArch>
 
         <AssemblyName>$(MSBuildProjectName)-$(_RuntimeOS)-$(_RuntimeArch)</AssemblyName>
         <TargetName>$(MSBuildProjectName)-$(_RuntimeOS)-$(_RuntimeArch)</TargetName>
