@@ -10,10 +10,10 @@ public interface ISaveSyncService
     event Action<bool> BusyStatusChanged;
     bool IsBusy { get; }
     
-    Task<SaveInfo> AddLocalSaveAsync(
-        string savePath, 
+    Task<SaveInfo> AddLocalSaveAsync(string savePath,
         string saveName,
         SaveType saveType,
+        string sourceFileExtension,
         IProgress<double>? progress = null,
         CancellationToken cancellationToken = default);
 

@@ -157,13 +157,13 @@ public sealed class ServerSession(ITransport transport) : IServerSession
     }
 
     public async Task<SaveInfo> RegisterNewSaveAsync(string name, SaveType saveType,
-        CancellationToken cancellationToken = default)
+        string sourceFileExtension, CancellationToken cancellationToken = default)
     {
         await _operationLock.WaitAsync(cancellationToken);
 
         try
         {
-            S2CRegisteredNewSaveMessage registeredMessage = await SendAndExpectAsync<S2CRegisteredNewSaveMessage>(new C2SRegisterNewSaveMessage(name, saveType), cancellationToken);
+            S2CRegisteredNewSaveMessage registeredMessage = await SendAndExpectAsync<S2CRegisteredNewSaveMessage>(new C2SRegisterNewSaveMessage(name, saveType, sourceFileExtension), cancellationToken);
             return registeredMessage.CreatedSaveInfo;
         }
         finally

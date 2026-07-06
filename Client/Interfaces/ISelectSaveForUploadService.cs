@@ -9,4 +9,4 @@ public interface ISelectSaveForUploadService
     Task<SelectSaveForUploadResult?> ShowAsync(CancellationToken cancellationToken = default);
 }
 
-public sealed record SelectSaveForUploadResult(string SavePath, string SaveName, SaveType SaveType);
+public sealed record SelectSaveForUploadResult(string SavePath, string SaveName, SaveType SaveType, string FileExtension);

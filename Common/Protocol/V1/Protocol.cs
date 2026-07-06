@@ -144,7 +144,7 @@ public record C2SForceReleaseMessage(SaveId SaveId) : C2SMessage(C2SMessageType.
 public record C2SReleaseMessage(SaveId SaveId) : C2SMessage(C2SMessageType.Release);
 
 [C2SMessageType(C2SMessageType.RegisterNewSave)]
-public record C2SRegisterNewSaveMessage(string Name, SaveType SaveType) : C2SMessage(C2SMessageType.RegisterNewSave);
+public record C2SRegisterNewSaveMessage(string Name, SaveType SaveType, string SourceFileExtension) : C2SMessage(C2SMessageType.RegisterNewSave);
 
 [C2SMessageType(C2SMessageType.OverwriteSaveData)]
 public record C2SOverwriteSaveDataMessage(SaveId SaveId) : C2SMessage(C2SMessageType.OverwriteSaveData);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -58,6 +59,8 @@ public partial class AddCloudSaveDialog : Window
         
         CloudSaves.Clear();
 
+        var cloudSaves = new List<CloudSaveInfoViewModel>();
+        
         foreach (SaveInfo save in _saveCatalogService.CloudSaves)
         {
             bool existsLocally = localSaves.Any(localSave => localSave.SaveId == save.SaveId);
@@ -72,12 +75,18 @@ public partial class AddCloudSaveDialog : Window
             else if (isCheckedOut)
                 cannotDownloadReason = $"Checked out by {save.CheckedOutByUserName}.";
             
-            CloudSaves.Add(new CloudSaveInfoViewModel
+            cloudSaves.Add(new CloudSaveInfoViewModel
             {
                 Name = save.Name, NativeObject = save, IsAvailableForDownload = canDownload,
                 IsNotAvailableForDownloadReason = cannotDownloadReason
             });
         }
+
+        foreach (CloudSaveInfoViewModel save in cloudSaves
+                     .OrderBy(s => !s.IsAvailableForDownload)
+                     .ThenByDescending(s => s.IsNotAvailableForDownloadReason)
+                     .ThenBy(s => s.Name))
+            CloudSaves.Add(save);
     }
 
     private CloudSaveInfoViewModel? GetSelectedCloudSaveInfo()
@@ -124,19 +133,22 @@ public partial class AddCloudSaveDialog : Window
         if (downloadPath is null)
             return;
 
-        var adjustedDownloadPath = GetDownloadPath(downloadPath);
-
-        if (!adjustedDownloadPath.Succeeded)
+        if (save.NativeObject.SaveType == SaveType.Directory)
         {
-            await _modalService.ShowAsync("Error", adjustedDownloadPath.Error);
-            return;
+            var adjustedDownloadPath = GetDownloadPath(downloadPath);
+            if (!adjustedDownloadPath.Succeeded)
+            {
+                await _modalService.ShowAsync("Error", adjustedDownloadPath.Error);
+                return;
+            }
+            downloadPath = adjustedDownloadPath.Value;
         }
         
-        bool proceed = await _modalService.ShowAsync("Save here?", $"""Save "{save.Name}" at: "{adjustedDownloadPath.Value}"?""", "Yes", "No");
+        bool proceed = await _modalService.ShowAsync("Save here?", $"""Save "{save.Name}" at "{downloadPath}"?""", "Yes", "No");
         if (!proceed)
             return;
         
-        Close(new Result(true, adjustedDownloadPath.Value, save.NativeObject));
+        Close(new Result(true, downloadPath, save.NativeObject));
     }
 
     private void CloudSavesList_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)

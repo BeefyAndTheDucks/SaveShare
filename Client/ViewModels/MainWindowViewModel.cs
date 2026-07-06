@@ -209,7 +209,7 @@ public partial class MainWindowViewModel : ViewModelBase
         
         await RunTaskAsync(result.SaveName, "Uploading save...", "Transferring data...", async (progress, token) =>
         {
-            await _saveSyncService.AddLocalSaveAsync(result.SavePath, result.SaveName, result.SaveType, progress, token);
+            await _saveSyncService.AddLocalSaveAsync(result.SavePath, result.SaveName, result.SaveType, result.FileExtension, progress, token);
         }, cancellationToken: cancellationToken);
     }
     

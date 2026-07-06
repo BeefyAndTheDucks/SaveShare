@@ -13,24 +13,29 @@
         <TabControl Grid.Row="0" Name="SaveType">
             <TabItem Header="Folder" Name="SaveTypeFolder">
                 <Border Margin="0 8" CornerRadius="8" Background="#202020" ClipToBounds="True">
-                    <Grid ColumnDefinitions="*,Auto" Background="#202020">
-                        <TextBox Grid.Column="0" Margin="8 8 2 8" Name="DirectoryPathTextBox" PlaceholderText="Path to save folder..."/>
-                        <Button Grid.Column="1" Margin="2 8 8 8" Content="Browse" Name="BrowseDirectoryButton" Click="BrowseDirectoryButton_OnClick"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto" Background="#202020">
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="8 8 2 8" Text="Save path:"/>
+                        <TextBox Grid.Column="1" Margin="2 8 2 8" Name="DirectoryPathTextBox" PlaceholderText="Path to save folder..."/>
+                        <Button Grid.Column="2" Margin="2 8 8 8" Content="Browse" Name="BrowseDirectoryButton" Click="BrowseDirectoryButton_OnClick"/>
                     </Grid>
                 </Border>
             </TabItem>
             <TabItem Header="File" Name="SaveTypeFile">
                 <Border Margin="0 8" CornerRadius="8" Background="#202020" ClipToBounds="True">
-                    <Grid ColumnDefinitions="*,Auto" Background="#202020">
-                        <TextBox Grid.Column="0" Margin="8 8 2 8" Name="FilePathTextBox" PlaceholderText="Path to save file..."/>
-                        <Button Grid.Column="1" Margin="2 8 8 8" Content="Browse" Name="BrowseFileButton" Click="BrowseFileButton_OnClick"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto" Background="#202020">
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="8 8 2 8" Text="Save path:"/>
+                        <TextBox Grid.Column="1" Margin="2 8 2 8" Name="FilePathTextBox" PlaceholderText="Path to save file..."/>
+                        <Button Grid.Column="2" Margin="2 8 8 8" Content="Browse" Name="BrowseFileButton" Click="BrowseFileButton_OnClick"/>
                     </Grid>
                 </Border>
             </TabItem>
         </TabControl>
         
         <Border Grid.Row="1" Margin="12 8" ClipToBounds="True" CornerRadius="8" Background="#202020">
-            <TextBox Margin="8" Name="SaveNameTextBox" PlaceholderText="Save name..."/>
+            <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="8 8 2 8" Text="Save name:"/>
+                <TextBox Grid.Column="1" Margin="2 8 8 8" Name="SaveNameTextBox" PlaceholderText="Save name..."/>
+            </Grid>
         </Border>
         
         <Border Grid.Row="3" Margin="12 8" ClipToBounds="True" CornerRadius="8" Background="#202020">

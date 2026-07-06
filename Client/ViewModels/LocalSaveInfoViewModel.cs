@@ -79,7 +79,12 @@ public partial class LocalSaveInfoViewModel(IModalService modalService, ISaveCat
                 return;
             }
             
-            Directory.Delete(localSaveEntry.LocalPath, true);
+            if (File.Exists(localSaveEntry.LocalPath))
+                File.Delete(localSaveEntry.LocalPath);
+            else if (Directory.Exists(localSaveEntry.LocalPath))
+                Directory.Delete(localSaveEntry.LocalPath, true);
+            else
+                await errorPresenter.ShowErrorAsync(new SaveNotFoundException(), cancellationToken);
         }
         
         await taskRunner.RunAsync(ct => saveCatalogService.DeleteLocalSave(Id, ct), cancellationToken);

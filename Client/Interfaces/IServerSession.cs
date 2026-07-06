@@ -28,9 +28,9 @@ public interface IServerSession
     Task<SaveInfo[]> ListSavesAsync(
         CancellationToken cancellationToken = default);
     
-    Task<SaveInfo> RegisterNewSaveAsync(
-        string name,
+    Task<SaveInfo> RegisterNewSaveAsync(string name,
         SaveType saveType,
+        string sourceFileExtension,
         CancellationToken cancellationToken = default);
     
     Task OverwriteSaveDataAsync(

@@ -30,8 +30,8 @@ public sealed class FileSystemPickerService(IMainWindowProvider mainWindowProvid
         IStorageFile? file = await mainWindowProvider.MainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = title,
-            DefaultExtension = defaultExtension,
-            SuggestedFileName = defaultName
+            SuggestedFileName = defaultName + defaultExtension,
+            ShowOverwritePrompt = true
         });
 
         return file?.TryGetLocalPath();

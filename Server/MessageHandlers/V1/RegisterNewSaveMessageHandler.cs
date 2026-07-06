@@ -23,6 +23,7 @@ public class RegisterNewSaveMessageHandler : MessageHandler<C2SRegisterNewSaveMe
         {
             info.Name = message.Name;
             info.SaveType = message.SaveType;
+            info.FileExtension = message.SourceFileExtension;
             return info;
         }, cancellationToken);
         if (!updateSaveResult.Succeeded)

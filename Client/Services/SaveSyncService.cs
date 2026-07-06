@@ -28,13 +28,13 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
     }
 
     public async Task<SaveInfo> AddLocalSaveAsync(string savePath, string saveName, SaveType saveType,
-        IProgress<double>? progress = null,
+        string sourceFileExtension, IProgress<double>? progress = null,
         CancellationToken cancellationToken = default)
     {
         BeginTask();
         try
         {
-            SaveInfo registeredSave = await serverSession.RegisterNewSaveAsync(saveName, saveType, cancellationToken);
+            SaveInfo registeredSave = await serverSession.RegisterNewSaveAsync(saveName, saveType, sourceFileExtension, cancellationToken);
             await localSavesStore.AddOrUpdateAsync(LocalSaveInfo.FromSave(registeredSave, savePath), cancellationToken);
             await saveCatalogService.RefreshAsync(cancellationToken);
             await OverwriteCloudSaveAsync(registeredSave.SaveId, savePath, progress, cancellationToken);

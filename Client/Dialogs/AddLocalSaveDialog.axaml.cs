@@ -13,7 +13,7 @@ public partial class AddLocalSaveDialog : Window
 {
     private readonly IFileSystemPickerService _fileSystemPickerService;
     
-    public record Result(bool Valid, string? SavePath, string? SaveName, SaveType SaveType);
+    public record Result(bool Valid, string? SavePath, string? SaveName, SaveType SaveType, string? FileExtension);
     
     public AddLocalSaveDialog()
     {
@@ -87,7 +87,7 @@ public partial class AddLocalSaveDialog : Window
 
         ErrorTextBlock.IsVisible = false;
         
-        Close(new Result(true, path, SaveNameTextBox.Text, saveType));
+        Close(new Result(true, path, SaveNameTextBox.Text, saveType, Path.GetExtension(path)));
     }
 
     private static bool ExistsOnDisk(string path, SaveType type)
