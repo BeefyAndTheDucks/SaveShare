@@ -2,7 +2,7 @@ namespace Common.Protocol.V1;
 
 public static class ProtocolV1
 {
-    public const int SUBVERSION = 1;
+    public const int SUBVERSION = 2;
 }
 
 public enum S2CMessageType
