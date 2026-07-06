@@ -11,9 +11,10 @@ public interface ITransport
 {
     bool IsConnected { get; }
     event Func<CancellationToken, Task>? ConnectionStatusChanged;
+    event Func<CancellationToken, Task>? ConnectedEarly;
     event Func<CancellationToken, Task>? Connected;
     
-    Task ConnectAsync(Uri uri, Func<CancellationToken, Task>? onConnected, CancellationToken cancellationToken = default);
+    Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default);
     Task DisconnectAsync(WebSocketCloseStatus reason = WebSocketCloseStatus.NormalClosure, string? message = null, CancellationToken cancellationToken = default);
     Task SendMessageAsync(C2SMessage message, CancellationToken cancellationToken = default);
     Task<S2CMessage> ReceiveMessageAsync(CancellationToken cancellationToken = default);

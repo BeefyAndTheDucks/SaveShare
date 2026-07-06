@@ -96,7 +96,9 @@ public sealed class ServerSession(ITransport transport) : IServerSession
     
     public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default)
     {
-        await transport.ConnectAsync(uri, VerifyProtocolVersion, cancellationToken);
+        transport.ConnectedEarly -= VerifyProtocolVersion;
+        transport.ConnectedEarly += VerifyProtocolVersion;
+        await transport.ConnectAsync(uri, cancellationToken);
 
         return;
 

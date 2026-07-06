@@ -19,6 +19,7 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
 
     public bool IsConnected => WebSocket?.State == WebSocketState.Open && !_lostConnectionReported;
     public event Func<CancellationToken, Task>? ConnectionStatusChanged;
+    public event Func<CancellationToken, Task>? ConnectedEarly;
     public event Func<CancellationToken, Task>? Connected;
 
     private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -62,7 +63,7 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
         return new TransportException("Lost connection to the server.", innerException);
     }
 
-    public async Task ConnectAsync(Uri uri, Func<CancellationToken, Task>? onConnected = null, CancellationToken cancellationToken = default)
+    public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken = default)
     {
         if (IsConnected)
             throw new TransportException("Cannot connect to server: Already connected.");
@@ -77,8 +78,8 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
 
             _lostConnectionReported = false;
 
-            if (onConnected is not null)
-                await onConnected.Invoke(cancellationToken);
+            if (ConnectedEarly is not null)
+                await ConnectedEarly.Invoke(cancellationToken);
 
             if (Connected is not null)
                 await Connected.Invoke(cancellationToken);
