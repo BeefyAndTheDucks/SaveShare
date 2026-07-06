@@ -73,6 +73,7 @@ public sealed class WebSocketTransport(IMessageCodec messageCodec) : ITransport,
         try
         {
             WebSocket = new ClientWebSocket();
+            WebSocket.Options.SetRequestHeader("localtonet-skip-warning", "true");
             await WebSocket.ConnectAsync(uri, cancellationToken);
             Console.WriteLine("Connected to server");
 
