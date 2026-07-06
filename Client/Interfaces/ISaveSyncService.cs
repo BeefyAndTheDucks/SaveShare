@@ -13,6 +13,7 @@ public interface ISaveSyncService
     Task<SaveInfo> AddLocalSaveAsync(
         string savePath, 
         string saveName,
+        SaveType saveType,
         IProgress<double>? progress = null,
         CancellationToken cancellationToken = default);
 

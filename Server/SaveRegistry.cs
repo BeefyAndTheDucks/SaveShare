@@ -113,15 +113,32 @@ public static class SaveRegistry
     public static async Task<Result> DeleteSave(SaveInfo save, CancellationToken cancellationToken = default) => await DeleteSave(save.SaveId, cancellationToken);
 
     public static string GetRealSavePathNoExistsCheck(SaveId saveId) => Path.Combine(GetSaveDirectory(), saveId.ToString());
-    public static Result<string> GetRealSavePath(SaveId saveId)
+    public static async Task<Result<string>> GetRealSavePath(SaveId saveId, CancellationToken cancellationToken = default)
     {
         string savePath = GetRealSavePathNoExistsCheck(saveId);
-        if (Directory.Exists(savePath))
+        var existsOnDiskResult = await ExistsOnDisk(saveId, cancellationToken);
+        if (existsOnDiskResult.Failed)
+            return Result<string>.Failure(existsOnDiskResult.Error);
+        if (existsOnDiskResult.Value)
             return savePath;
         return Result<string>.Failure("Real save doesn't exist.");
     }
 
-    public static Result<string> GetRealSavePath(SaveInfo saveInfo) => GetRealSavePath(saveInfo.SaveId);
+    public static async Task<Result<bool>> ExistsOnDisk(SaveId saveId, CancellationToken cancellationToken = default)
+    {
+        var saveInfoResult = await GetSaveInfo(saveId, cancellationToken);
+        if (saveInfoResult.Failed)
+            return Result<bool>.Failure(saveInfoResult.Error);
+
+        return saveInfoResult.Value.SaveType switch
+        {
+            SaveType.Directory => Directory.Exists(GetRealSavePathNoExistsCheck(saveId)),
+            SaveType.File => File.Exists(GetRealSavePathNoExistsCheck(saveId)),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    public static async Task<Result<string>> GetRealSavePath(SaveInfo saveInfo, CancellationToken cancellationToken = default) => await GetRealSavePath(saveInfo.SaveId, cancellationToken);
 
     public static async Task<Result> TryCheckout(SaveId saveId, string userName, CancellationToken cancellationToken = default)
     {

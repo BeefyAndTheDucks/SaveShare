@@ -30,6 +30,7 @@ public interface IServerSession
     
     Task<SaveInfo> RegisterNewSaveAsync(
         string name,
+        SaveType saveType,
         CancellationToken cancellationToken = default);
     
     Task OverwriteSaveDataAsync(
@@ -57,8 +58,8 @@ public interface IServerSession
         CancellationToken cancellationToken = default);
 
     Task DownloadSaveChangesAsync(SaveId saveId,
-        DirectoryManifest localManifest,
-        Action<DirectoryManifest> onManifestReceived,
+        SaveManifest localManifest,
+        Action<SaveManifest> onManifestReceived,
         Func<Stream, CancellationToken, Task> readSignaturesDataAsync,
         Func<Stream, CancellationToken, Task> writeDeltasDataAsync,
         IProgress<double>? createManifestProgress,
@@ -68,8 +69,8 @@ public interface IServerSession
         CancellationToken cancellationToken = default);
 
     Task UploadSaveChangesAsync(SaveId saveId,
-        DirectoryManifest manifest,
-        Action<DirectoryManifest> onManifestReceived,
+        SaveManifest manifest,
+        Action<SaveManifest> onManifestReceived,
         Func<Stream, CancellationToken, Task> readSignaturesAsync,
         Func<Stream, CancellationToken, Task> writeDeltasAsync,
         IProgress<double>? createManifestProgress,

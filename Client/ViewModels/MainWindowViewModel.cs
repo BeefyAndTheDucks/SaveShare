@@ -209,7 +209,7 @@ public partial class MainWindowViewModel : ViewModelBase
         
         await RunTaskAsync(result.SaveName, "Uploading save...", "Transferring data...", async (progress, token) =>
         {
-            await _saveSyncService.AddLocalSaveAsync(result.SavePath, result.SaveName, progress, token);
+            await _saveSyncService.AddLocalSaveAsync(result.SavePath, result.SaveName, result.SaveType, progress, token);
         }, cancellationToken: cancellationToken);
     }
     
@@ -395,8 +395,15 @@ public partial class MainWindowViewModel : ViewModelBase
 
 public class LocalSaveViewModelProgress(LocalSaveInfoViewModel viewModel, double overallProgressBegin, double overallProgressEnd, string subOperationName) : IProgress<double>
 {
+    private double _last;
+    
     public void Report(double value)
     {
+        if (value - _last < 0.01 && value < 1)
+            return;
+        
+        _last = value;
+        
         viewModel.CurrentOperationProgress = double.Lerp(overallProgressBegin, overallProgressEnd, value);
         viewModel.CurrentSubOperation = subOperationName;
         viewModel.CurrentSubOperationProgress = value;

@@ -16,6 +16,6 @@ public sealed class SelectSaveForUploadService(IMainWindowProvider mainWindowPro
         if (result is not { Valid: true })
             return null;
         
-        return new SelectSaveForUploadResult(result.SavePath!, result.SaveName!);
+        return new SelectSaveForUploadResult(result.SavePath!, result.SaveName!, result.SaveType);
     }
 }

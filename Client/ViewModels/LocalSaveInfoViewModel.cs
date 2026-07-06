@@ -102,6 +102,16 @@ public partial class LocalSaveInfoViewModel(IModalService modalService, ISaveCat
             return;
         }
         
-        await mainWindowProvider.MainWindow.Launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(localSave.LocalPath));
+        string? pathToOpen = localSave.LocalPath;
+        if (File.Exists(localSave.LocalPath))
+            pathToOpen = Path.GetDirectoryName(localSave.LocalPath);
+
+        if (pathToOpen is null)
+        {
+            await errorPresenter.ShowErrorAsync(new SaveNotFoundException(), cancellationToken);
+            return;
+        }
+        
+        await mainWindowProvider.MainWindow.Launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(pathToOpen));
     }
 }

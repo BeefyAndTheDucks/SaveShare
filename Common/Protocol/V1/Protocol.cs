@@ -57,6 +57,7 @@ public enum ErrorCode
 
 
 // Direct operation result messages
+// -- DO NOT CHANGE THIS MESSAGE!!! --
 [S2CMessageType(S2CMessageType.ServerVersion)]
 public record S2CServerVersionMessage(int ProtocolVersion = ProtocolV1.SUBVERSION, string ApplicationVersion = Constants.APPLICATION_VERSION) : S2CMessage(S2CMessageType.ServerVersion);
 
@@ -73,7 +74,7 @@ public record S2CSaveListMessage(SaveInfo[] Saves) : S2CMessage(S2CMessageType.S
 public record S2CGotSaveInfoMessage(SaveInfo Save) : S2CMessage(S2CMessageType.GotSaveInfo);
 
 [S2CMessageType(S2CMessageType.SaveManifest)]
-public record S2CSaveManifestMessage(DirectoryManifest Manifest) : S2CMessage(S2CMessageType.SaveManifest);
+public record S2CSaveManifestMessage(SaveManifest Manifest) : S2CMessage(S2CMessageType.SaveManifest);
 
 [S2CMessageType(S2CMessageType.RegisteredNewSave)]
 public record S2CRegisteredNewSaveMessage(SaveInfo CreatedSaveInfo) : S2CMessage(S2CMessageType.RegisteredNewSave);
@@ -143,7 +144,7 @@ public record C2SForceReleaseMessage(SaveId SaveId) : C2SMessage(C2SMessageType.
 public record C2SReleaseMessage(SaveId SaveId) : C2SMessage(C2SMessageType.Release);
 
 [C2SMessageType(C2SMessageType.RegisterNewSave)]
-public record C2SRegisterNewSaveMessage(string Name) : C2SMessage(C2SMessageType.RegisterNewSave);
+public record C2SRegisterNewSaveMessage(string Name, SaveType SaveType) : C2SMessage(C2SMessageType.RegisterNewSave);
 
 [C2SMessageType(C2SMessageType.OverwriteSaveData)]
 public record C2SOverwriteSaveDataMessage(SaveId SaveId) : C2SMessage(C2SMessageType.OverwriteSaveData);
@@ -161,7 +162,7 @@ public record C2SReadyForBinaryDataMessage() : C2SMessage(C2SMessageType.ReadyFo
 public record C2SReadyToSendBinaryDataMessage() : C2SMessage(C2SMessageType.ReadyToSendBinaryData);
 
 [C2SMessageType(C2SMessageType.DownloadSaveChanges)]
-public record C2SDownloadSaveChangesMessage(SaveId SaveId, DirectoryManifest ClientSideManifest) : C2SMessage(C2SMessageType.DownloadSaveChanges);
+public record C2SDownloadSaveChangesMessage(SaveId SaveId, SaveManifest ClientSideManifest) : C2SMessage(C2SMessageType.DownloadSaveChanges);
 
 [C2SMessageType(C2SMessageType.UploadSaveChanges)]
-public record C2SUploadSaveChangesMessage(SaveId SaveId, DirectoryManifest ClientSideManifest) : C2SMessage(C2SMessageType.UploadSaveChanges);
+public record C2SUploadSaveChangesMessage(SaveId SaveId, SaveManifest ClientSideManifest) : C2SMessage(C2SMessageType.UploadSaveChanges);

@@ -1,5 +1,4 @@
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Common;
 
@@ -9,6 +8,8 @@ public struct SaveInfo
     
     public SaveId SaveId { get; set; }
     public string Name { get; set; }
+    public SaveType SaveType { get; set; }
+    public string FileExtension { get; set; }
     public string CheckedOutByUserName { get; set; }
     public DateTime CheckedOutAt { get; set; }
     public string LastSyncedByUserName { get; set; }
@@ -16,7 +17,6 @@ public struct SaveInfo
     
     public string Serialize()
     {
-        JObject obj = JObject.FromObject(this);
         return JsonConvert.SerializeObject(this);
     }
     
@@ -35,7 +35,7 @@ public struct SaveInfo
     public override string ToString()
     {
         return
-            $"{nameof(SaveId)}: {SaveId}, {nameof(Name)}: {Name}, {nameof(CheckedOutByUserName)}: {CheckedOutByUserName}, {nameof(CheckedOutAt)}: {CheckedOutAt}, {nameof(LastSyncedByUserName)}: {LastSyncedByUserName}, {nameof(LastSyncedAt)}: {LastSyncedAt}";
+            $"{nameof(SaveId)}: {SaveId}, {nameof(Name)}: {Name}, {nameof(SaveType)}: {SaveType}, {nameof(CheckedOutByUserName)}: {CheckedOutByUserName}, {nameof(CheckedOutAt)}: {CheckedOutAt}, {nameof(LastSyncedByUserName)}: {LastSyncedByUserName}, {nameof(LastSyncedAt)}: {LastSyncedAt}";
     }
 }
 

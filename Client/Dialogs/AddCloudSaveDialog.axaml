@@ -11,15 +11,6 @@
         MinWidth="600" MinHeight="300"
         Width="600" Height="400">
     <Grid RowDefinitions="Auto,*,Auto,Auto" Background="#303030">
-        <Border Background="#202020" CornerRadius="8" Margin="8" ClipToBounds="True">
-            <Grid RowDefinitions="Auto,Auto" Background="#202020">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBox Grid.Column="0" Margin="8 8 2 8" Name="PathTextBox" PlaceholderText="Download location..." TextChanged="PathTextBox_OnTextChanged"></TextBox>
-                    <Button Grid.Column="1" Margin="2 8 8 8" Content="Browse" Name="BrowseButton" Click="BrowseButton_OnClick"></Button>
-                </Grid>
-                <TextBlock Grid.Row="1" Margin="8 -4 8 8" Foreground="#B0B0B0" Name="DownloadTargetInfo" IsVisible="False"></TextBlock>
-            </Grid>
-        </Border>
         <Border Grid.Row="1" Background="#202020" CornerRadius="8" Margin="8" ClipToBounds="True">
             <StackPanel>
                 <TextBlock Margin="8" HorizontalAlignment="Center" FontWeight="Bold">Available saves:</TextBlock>
@@ -29,7 +20,7 @@
                            HorizontalAlignment="Center"
                            Text="No saves available."/>
                 <ListBox ItemsSource="{Binding CloudSaves}"
-                         SelectionChanged="SelectingItemsControl_OnSelectionChanged"
+                         SelectionChanged="CloudSavesList_OnSelectionChanged"
                          Name="CloudSavesList"
                          Background="#202020">
                     <ListBox.Styles>
@@ -50,14 +41,10 @@
             </StackPanel>
         </Border>
         
-        <Border Grid.Row="2" Background="#202020" CornerRadius="8" Margin="8" ClipToBounds="True" IsVisible="False" Name="ErrorTextParent">
-            <TextBlock Padding="8" Foreground="Red" Background="#202020" Name="ErrorTextBlock"/>
-        </Border>
-        
         <Border Grid.Row="3" Margin="8" ClipToBounds="True" Background="#202020" CornerRadius="8">
             <Grid ColumnDefinitions="Auto,*,Auto" Background="#202020">
-                <Button Grid.Column="0" Margin="8" Content="Cancel" Name="CancelButton" Click="CancelButton_OnClick"></Button>
-                <Button Grid.Column="2" Margin="8" Content="Ok" Name="OkButton" Click="OkButton_OnClick"></Button>
+                <Button Grid.Column="0" Margin="8" Content="Cancel" Name="CancelButton" Click="CancelButton_OnClick"/>
+                <Button Grid.Column="2" Margin="8" Content="Select" Name="SelectButton" Click="SelectButton_OnClick" IsEnabled="False"/>
             </Grid>
         </Border>
     </Grid>

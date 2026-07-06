@@ -25,18 +25,18 @@ public class DownloadSaveMessageHandler : MessageHandler<C2SDownloadSaveMessage>
             return;
         }
         
-        Result<string> getPathResult = SaveRegistry.GetRealSavePath(message.SaveId);
+        Result<string> getPathResult = await SaveRegistry.GetRealSavePath(message.SaveId, cancellationToken);
         if (!getPathResult.Succeeded)
         {
             await Error(ErrorCode.SaveFilesMissing, getPathResult.Error, webSocket, cancellationToken);
             return;
         }
 
-        long byteCount = await DirectoryPacker.GetPackedSizeAsync(getPathResult.Value, cancellationToken);
-        await MessageHelpers.SendMessage(new S2CReadyToSendBinaryDataMessage(byteCount), webSocket, cancellationToken);
-        await MessageHelpers.AwaitResponse<C2SReadyForBinaryDataMessage>(webSocket, cancellationToken);
-
-        await using Stream stream = WebSocketStream.Create(webSocket, WebSocketMessageType.Binary);
-        await DirectoryPacker.PackDirectoryAsync(getPathResult.Value, stream, cancellationToken);
+        await SavePacker.PackAsync(getPathResult.Value, () => WebSocketStream.Create(webSocket, WebSocketMessageType.Binary), true,
+            async (size, token) =>
+            {
+                await MessageHelpers.SendMessage(new S2CReadyToSendBinaryDataMessage(size), webSocket, token);
+                await MessageHelpers.AwaitResponse<C2SReadyForBinaryDataMessage>(webSocket, token);
+            }, cancellationToken);
     }
 }

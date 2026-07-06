@@ -1,7 +1,9 @@
+using System;
 using System.IO;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Client.Interfaces;
+using Common;
 
 // ReSharper disable AsyncVoidEventHandlerMethod
 
@@ -9,9 +11,9 @@ namespace Client.Dialogs;
 
 public partial class AddLocalSaveDialog : Window
 {
-    private readonly IFolderPickerService _folderPickerService;
+    private readonly IFileSystemPickerService _fileSystemPickerService;
     
-    public record Result(bool Valid, string? SavePath, string? SaveName);
+    public record Result(bool Valid, string? SavePath, string? SaveName, SaveType SaveType);
     
     public AddLocalSaveDialog()
     {
@@ -19,24 +21,34 @@ public partial class AddLocalSaveDialog : Window
 
         DataContext = this;
 
-        _folderPickerService = null!;
+        _fileSystemPickerService = null!;
     }
     
-    public AddLocalSaveDialog(IFolderPickerService folderPickerService)
+    public AddLocalSaveDialog(IFileSystemPickerService fileSystemPickerService)
     {
         InitializeComponent();
 
         DataContext = this;
         
-        _folderPickerService = folderPickerService;
+        _fileSystemPickerService = fileSystemPickerService;
     }
 
-    private async void BrowseButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void BrowseDirectoryButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        string? folderPath = await _folderPickerService.PickFolderAsync("Select local save");
+        string? folderPath = await _fileSystemPickerService.PickFolderAsync("Select local save folder");
         if (folderPath is null)
             return;
-        PathTextBox.Text = folderPath;
+        DirectoryPathTextBox.Text = folderPath;
+        SaveNameTextBox.Text = Path.GetFileName(folderPath);
+    }
+
+    private async void BrowseFileButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        string? filePath = await _fileSystemPickerService.OpenFileAsync("Select local save file");
+        if (filePath is null)
+            return;
+        FilePathTextBox.Text = filePath;
+        SaveNameTextBox.Text = Path.GetFileNameWithoutExtension(filePath);
     }
 
     private void CancelButton_OnClick(object? sender, RoutedEventArgs e)
@@ -46,23 +58,45 @@ public partial class AddLocalSaveDialog : Window
 
     private void OkButton_OnClick(object? sender, RoutedEventArgs e)
     {
+        SaveType saveType = Common.SaveType.Directory;
+        if (SaveTypeFile.IsSelected)
+            saveType = Common.SaveType.File;
+
+        string? path = saveType switch
+        {
+            Common.SaveType.Directory => DirectoryPathTextBox.Text,
+            Common.SaveType.File => FilePathTextBox.Text,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
         bool hasSaveName = !string.IsNullOrWhiteSpace(SaveNameTextBox.Text);
-        bool hasPath = !string.IsNullOrWhiteSpace(PathTextBox.Text) && Directory.Exists(PathTextBox.Text);
+        bool hasPath = !string.IsNullOrWhiteSpace(path) && ExistsOnDisk(path, saveType);
 
         if (!hasPath || !hasSaveName)
         {
             ErrorTextBlock.IsVisible = true;
-            if (!hasSaveName && !hasPath)
-                ErrorTextBlock.Text = "Please enter a valid save name and path.";
-            else if (!hasSaveName)
-                ErrorTextBlock.Text = "Please enter a valid save name.";
-            else if (!hasPath)
-                ErrorTextBlock.Text = "Please enter a valid save path.";
+            ErrorTextBlock.Text = hasSaveName switch
+            {
+                false when !hasPath => "Please enter a valid save name and path.",
+                false when hasPath => "Please enter a valid save name.",
+                true when !hasPath => "Please enter a valid save path.",
+                _ => ErrorTextBlock.Text
+            };
             return;
         }
 
         ErrorTextBlock.IsVisible = false;
+        
+        Close(new Result(true, path, SaveNameTextBox.Text, saveType));
+    }
 
-        Close(new Result(true, PathTextBox.Text, SaveNameTextBox.Text));
+    private static bool ExistsOnDisk(string path, SaveType type)
+    {
+        return type switch
+        {
+            Common.SaveType.Directory => Directory.Exists(path),
+            Common.SaveType.File => File.Exists(path),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+        };
     }
 }

@@ -14,5 +14,5 @@ public partial class CloudSaveInfoViewModel : ViewModelBase
     [ObservableProperty]
     public partial string? IsNotAvailableForDownloadReason { get; set; }
     
-    public SaveId SaveId { get; init; }
+    public SaveInfo NativeObject { get; init; }
 }

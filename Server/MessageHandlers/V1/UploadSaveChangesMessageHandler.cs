@@ -31,19 +31,19 @@ public class UploadSaveChangesMessageHandler : MessageHandler<C2SUploadSaveChang
             return;
         }
 
-        Result<string> getPathResult = SaveRegistry.GetRealSavePath(message.SaveId);
+        Result<string> getPathResult = await SaveRegistry.GetRealSavePath(message.SaveId, cancellationToken);
         if (getPathResult.Failed)
         {
             await Error(ErrorCode.SaveFilesMissing, getPathResult.Error, webSocket, cancellationToken);
             return;
         }
         
-        DirectoryManifest serverManifest = await DirectoryManifest.From(getPathResult.Value, new MessageHelpers.MessageProgress(webSocket, cancellationToken), cancellationToken);
+        SaveManifest serverManifest = await SaveManifest.From(getPathResult.Value, new MessageHelpers.MessageProgress(webSocket, cancellationToken), cancellationToken);
         
         await MessageHelpers.SendMessage(new S2CSaveManifestMessage(serverManifest), webSocket, cancellationToken);
         
         IProgress<double> progress = new MessageHelpers.MessageProgress(webSocket, cancellationToken);
-        await DirectoryPacker.BuildAndPackSignaturesAsync(getPathResult.Value, () => WebSocketStream.Create(webSocket, WebSocketMessageType.Binary), 
+        await SavePacker.BuildAndPackSignaturesAsync(getPathResult.Value, () => WebSocketStream.Create(webSocket, WebSocketMessageType.Binary), 
             message.ClientSideManifest, serverManifest, progress, async (byteSize, token) =>
             {
                 await MessageHelpers.SendMessage(new S2CReadyToSendBinaryDataMessage(byteSize), webSocket, token);
@@ -65,7 +65,7 @@ public class UploadSaveChangesMessageHandler : MessageHandler<C2SUploadSaveChang
         await MessageHelpers.SendMessage(new S2CReadyForBinaryDataMessage(), webSocket, cancellationToken);
         await using (Stream stream = WebSocketStream.Create(webSocket, WebSocketMessageType.Binary))
         {
-            await DirectoryPacker.ApplyDeltasAsync(getPathResult.Value, stream, message.ClientSideManifest, serverManifest, progress, cancellationToken);
+            await SavePacker.ApplyDeltasAsync(getPathResult.Value, stream, message.ClientSideManifest, serverManifest, progress, cancellationToken);
         }
         await MessageHelpers.SendMessage(new S2CSuccessMessage("Successfully updated save data"), webSocket, cancellationToken);
         

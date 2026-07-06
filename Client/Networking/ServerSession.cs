@@ -154,13 +154,14 @@ public sealed class ServerSession(ITransport transport) : IServerSession
         }
     }
 
-    public async Task<SaveInfo> RegisterNewSaveAsync(string name, CancellationToken cancellationToken = default)
+    public async Task<SaveInfo> RegisterNewSaveAsync(string name, SaveType saveType,
+        CancellationToken cancellationToken = default)
     {
         await _operationLock.WaitAsync(cancellationToken);
 
         try
         {
-            S2CRegisteredNewSaveMessage registeredMessage = await SendAndExpectAsync<S2CRegisteredNewSaveMessage>(new C2SRegisterNewSaveMessage(name), cancellationToken);
+            S2CRegisteredNewSaveMessage registeredMessage = await SendAndExpectAsync<S2CRegisteredNewSaveMessage>(new C2SRegisterNewSaveMessage(name, saveType), cancellationToken);
             return registeredMessage.CreatedSaveInfo;
         }
         finally
@@ -246,8 +247,8 @@ public sealed class ServerSession(ITransport transport) : IServerSession
     }
 
     public async Task DownloadSaveChangesAsync(SaveId saveId,
-        DirectoryManifest localManifest,
-        Action<DirectoryManifest> onManifestReceived,
+        SaveManifest localManifest,
+        Action<SaveManifest> onManifestReceived,
         Func<Stream, CancellationToken, Task> readSignaturesDataAsync,
         Func<Stream, CancellationToken, Task> writeDeltasDataAsync,
         IProgress<double>? createManifestProgress,
@@ -277,8 +278,8 @@ public sealed class ServerSession(ITransport transport) : IServerSession
     }
 
     public async Task UploadSaveChangesAsync(SaveId saveId,
-        DirectoryManifest manifest,
-        Action<DirectoryManifest> onManifestReceived,
+        SaveManifest manifest,
+        Action<SaveManifest> onManifestReceived,
         Func<Stream, CancellationToken, Task> readSignaturesAsync,
         Func<Stream, CancellationToken, Task> writeDeltasAsync,
         IProgress<double>? createManifestProgress,

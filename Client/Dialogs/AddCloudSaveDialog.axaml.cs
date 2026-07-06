@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -17,8 +18,9 @@ public partial class AddCloudSaveDialog : Window
     public record Result(bool Valid, string? TargetPath, SaveInfo? SaveInfo);
     
     private readonly ISaveCatalogService _saveCatalogService;
-    private readonly IFolderPickerService _folderPickerService;
+    private readonly IFileSystemPickerService _fileSystemPickerService;
     private readonly ITaskRunner _taskRunner;
+    private readonly IModalService _modalService;
 
     public ObservableCollection<CloudSaveInfoViewModel> CloudSaves { get; } = [];
 
@@ -29,19 +31,21 @@ public partial class AddCloudSaveDialog : Window
         DataContext = this;
 
         _saveCatalogService = null!;
-        _folderPickerService = null!;
+        _fileSystemPickerService = null!;
         _taskRunner = null!;
+        _modalService = null!;
     }
     
-    public AddCloudSaveDialog(ISaveCatalogService saveCatalogService, IFolderPickerService folderPickerService, ITaskRunner taskRunner)
+    public AddCloudSaveDialog(ISaveCatalogService saveCatalogService, IFileSystemPickerService fileSystemPickerService, ITaskRunner taskRunner, IModalService modalService)
     {
         InitializeComponent();
         
         DataContext = this;
         
         _saveCatalogService = saveCatalogService;
-        _folderPickerService = folderPickerService;
+        _fileSystemPickerService = fileSystemPickerService;
         _taskRunner = taskRunner;
+        _modalService = modalService;
 
         Opened += async (_, _) => await LoadSaves();
     }
@@ -70,23 +74,10 @@ public partial class AddCloudSaveDialog : Window
             
             CloudSaves.Add(new CloudSaveInfoViewModel
             {
-                Name = save.Name, SaveId = save.SaveId, IsAvailableForDownload = canDownload,
+                Name = save.Name, NativeObject = save, IsAvailableForDownload = canDownload,
                 IsNotAvailableForDownloadReason = cannotDownloadReason
             });
         }
-    }
-
-    private async void BrowseButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        string? folderPath = await _folderPickerService.PickFolderAsync("Select download location");
-        if (folderPath is null)
-            return;
-        PathTextBox.Text = folderPath;
-    }
-
-    private void PathTextBox_OnTextChanged(object? sender, TextChangedEventArgs e)
-    {
-        UpdateDownloadTargetInfo();
     }
 
     private CloudSaveInfoViewModel? GetSelectedCloudSaveInfo()
@@ -94,39 +85,21 @@ public partial class AddCloudSaveDialog : Window
         return CloudSavesList.SelectedItem as CloudSaveInfoViewModel;
     }
 
-    private Result<string> GetDownloadPath()
+    private Result<string> GetDownloadPath(string basePath)
     {
         CloudSaveInfoViewModel? cloudSaveInfoViewModel = GetSelectedCloudSaveInfo();
         if (cloudSaveInfoViewModel is null)
             return Result<string>.Failure("No save selected.");
 
-        if (!Directory.Exists(PathTextBox.Text))
+        if (!Directory.Exists(basePath))
             return Result<string>.Failure("Invalid destination directory.");
 
-        if (Directory.GetFileSystemEntries(PathTextBox.Text).Length == 0) return PathTextBox.Text;
+        if (Directory.GetFileSystemEntries(basePath).Length == 0) return basePath;
         
-        string path = Path.Combine(PathTextBox.Text, cloudSaveInfoViewModel.Name);
+        string path = Path.Combine(basePath, cloudSaveInfoViewModel.Name);
 
         if (!Directory.Exists(path) || Directory.GetFileSystemEntries(path).Length == 0) return path;
         return Result<string>.Failure("Destination directory already exists and isn't empty.");
-    }
-
-    private void UpdateDownloadTargetInfo()
-    {
-        Result<string> downloadPath = GetDownloadPath();
-        if (!downloadPath.Succeeded)
-        {
-            DownloadTargetInfo.IsVisible = false;
-            return;
-        }
-        
-        DownloadTargetInfo.IsVisible = true;
-        DownloadTargetInfo.Text = $"Downloading to {downloadPath.Value}";
-    }
-
-    private void SelectingItemsControl_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        UpdateDownloadTargetInfo();
     }
 
     private void CancelButton_OnClick(object? sender, RoutedEventArgs e)
@@ -134,18 +107,40 @@ public partial class AddCloudSaveDialog : Window
         Close();
     }
 
-    private void OkButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void SelectButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        Result<string> path = GetDownloadPath();
-        if (!path.Succeeded)
+        CloudSaveInfoViewModel? save = GetSelectedCloudSaveInfo();
+
+        if (save is null)
+            return;
+
+        string? downloadPath = save.NativeObject.SaveType switch
         {
-            ErrorTextBlock.Text = path.Error;
-            ErrorTextParent.IsVisible = true;
+            SaveType.Directory => await _fileSystemPickerService.PickFolderAsync("Select save folder location"),
+            SaveType.File => await _fileSystemPickerService.SaveFileAsync("Select save file location", save.NativeObject.Name, save.NativeObject.FileExtension),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+        
+        if (downloadPath is null)
+            return;
+
+        var adjustedDownloadPath = GetDownloadPath(downloadPath);
+
+        if (!adjustedDownloadPath.Succeeded)
+        {
+            await _modalService.ShowAsync("Error", adjustedDownloadPath.Error);
             return;
         }
+        
+        bool proceed = await _modalService.ShowAsync("Save here?", $"""Save "{save.Name}" at: "{adjustedDownloadPath.Value}"?""", "Yes", "No");
+        if (!proceed)
+            return;
+        
+        Close(new Result(true, adjustedDownloadPath.Value, save.NativeObject));
+    }
 
-        ErrorTextParent.IsVisible = false;
-        CloudSaveInfoViewModel? cloudSaveInfoViewModel = GetSelectedCloudSaveInfo();
-        Close(new Result(true, path.Value, _saveCatalogService.CloudSaves.First(save => save.SaveId == cloudSaveInfoViewModel?.SaveId)));
+    private void CloudSavesList_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        SelectButton.IsEnabled = CloudSavesList.SelectedItem != null;
     }
 }

@@ -2,14 +2,19 @@ using System.Collections.Concurrent;
 
 namespace Common;
 
-public class DirectoryManifest
+public class SaveManifest
 {
     public Dictionary<string, FileMetadata> Metadata { get; private init; } = new();
     
-    private static readonly int MaxFileParallelism = Math.Min(Environment.ProcessorCount, 2);
-    
-    public static async Task<DirectoryManifest> From(string directoryPath, IProgress<double>? createManifestProgress = null, CancellationToken ct = default)
+    public static async Task<SaveManifest> From(string directoryPath, IProgress<double>? createManifestProgress = null, CancellationToken ct = default)
     {
+        if (File.Exists(directoryPath))
+        {
+            SaveManifest manifest = await FromSingleFile(directoryPath, ct);
+            createManifestProgress?.Report(1);
+            return manifest;
+        }
+        
         string[] files = Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories);
         
         var metadata = new ConcurrentDictionary<string, FileMetadata>();
@@ -20,7 +25,7 @@ public class DirectoryManifest
             new ParallelOptions
             {
                 CancellationToken = ct,
-                MaxDegreeOfParallelism = MaxFileParallelism
+                MaxDegreeOfParallelism = Constants.MaxFileParallelism
             },
             async (file, cancellationToken) =>
             {
@@ -34,16 +39,29 @@ public class DirectoryManifest
                 createManifestProgress?.Report((double)done / files.Length);
             });
         
-        return new DirectoryManifest
+        return new SaveManifest
         {
             Metadata = new Dictionary<string, FileMetadata>(metadata)
+        };
+    }
+
+    public static async Task<SaveManifest> FromSingleFile(string filePath, CancellationToken ct = default)
+    {
+        return FromSingleFile(await FileMetadata.From(filePath, ct));
+    }
+
+    public static SaveManifest FromSingleFile(FileMetadata file)
+    {
+        return new SaveManifest
+        {
+            Metadata = new Dictionary<string, FileMetadata> { { SavePacker.SINGLE_FILE_SAVE_FILE_FILE_NAME, file } }
         };
     }
 }
 
 public static class DirectoryManifestExtensions
 {
-    extension(DirectoryManifest manifest)
+    extension(SaveManifest manifest)
     {
         public IEnumerable<string> Files => manifest.Metadata.Keys;
         public int FileCount => manifest.Metadata.Count;

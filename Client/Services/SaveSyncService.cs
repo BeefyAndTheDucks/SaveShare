@@ -27,13 +27,14 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
             BusyStatusChanged?.Invoke(false);
     }
 
-    public async Task<SaveInfo> AddLocalSaveAsync(string savePath, string saveName, IProgress<double>? progress = null,
+    public async Task<SaveInfo> AddLocalSaveAsync(string savePath, string saveName, SaveType saveType,
+        IProgress<double>? progress = null,
         CancellationToken cancellationToken = default)
     {
         BeginTask();
         try
         {
-            SaveInfo registeredSave = await serverSession.RegisterNewSaveAsync(saveName, cancellationToken);
+            SaveInfo registeredSave = await serverSession.RegisterNewSaveAsync(saveName, saveType, cancellationToken);
             await localSavesStore.AddOrUpdateAsync(LocalSaveInfo.FromSave(registeredSave, savePath), cancellationToken);
             await saveCatalogService.RefreshAsync(cancellationToken);
             await OverwriteCloudSaveAsync(registeredSave.SaveId, savePath, progress, cancellationToken);
@@ -51,13 +52,15 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
         BeginTask();
         try
         {
-            long compressedTotal = await DirectoryPacker.GetPackedSizeAsync(savePath, cancellationToken);
-        
-            IProgress<long>? byteProgress = ByteProgressToNormalizedProgress.From(progress, compressedTotal);
+            ByteProgressToNormalizedProgress? byteProgress = ByteProgressToNormalizedProgress.From(progress, 999999);
 
             await serverSession.OverwriteSaveDataAsync(saveId, async (stream, ct) =>
             {
-                await DirectoryPacker.PackDirectoryAsync(savePath, stream, ct);
+                await SavePacker.PackAsync(savePath, stream, false, (size, _) =>
+                {
+                    byteProgress?.ChangeByteCount(size);
+                    return Task.CompletedTask;
+                }, ct);
             }, byteProgress, cancellationToken);
         
             await saveCatalogService.RefreshAsync(cancellationToken);
@@ -74,7 +77,7 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
         BeginTask();
         try
         {
-            Result<SaveInfo> save = saveCatalogService.GetSaveInfo(saveId);
+            var save = saveCatalogService.GetSaveInfo(saveId);
             if (!save.Check())
                 return;
             await localSavesStore.AddOrUpdateAsync(LocalSaveInfo.FromSave(save.Value, targetPath), cancellationToken);
@@ -82,7 +85,7 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
 
             await serverSession.DownloadSaveAsync(saveId, async (stream, ct) =>
             {
-                await DirectoryPacker.UnpackDirectoryAsync(stream, targetPath, ct: ct);
+                await SavePacker.UnpackAsync(stream, targetPath, ct: ct);
             }, byteCount => ByteProgressToNormalizedProgress.From(progress, byteCount), cancellationToken);
 
             await saveCatalogService.RefreshAsync(cancellationToken);
@@ -137,8 +140,8 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
 
             AggregateProgress? buildManifestAggregateProgress = AggregateProgress.From(createManifestProgress, 2);
         
-            DirectoryManifest? cloudManifest = null;
-            DirectoryManifest localManifest = await DirectoryManifest.From(localSaveInfo.LocalPath, buildManifestAggregateProgress?.CreateProgressItem(), cancellationToken);
+            SaveManifest? cloudManifest = null;
+            SaveManifest localManifest = await SaveManifest.From(localSaveInfo.LocalPath, buildManifestAggregateProgress?.CreateProgressItem(), cancellationToken);
         
             await CheckoutCloudSaveAsync(saveId, cancellationToken);
             await serverSession.DownloadSaveChangesAsync(saveId, localManifest, m => cloudManifest = m, async (stream, token) =>
@@ -146,7 +149,7 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
                     if (cloudManifest is null)
                         throw new InvalidOperationException("Manifest was not received.");
                 
-                    await DirectoryPacker.BuildAndPackSignaturesAsync(localSaveInfo.LocalPath, () => stream, cloudManifest,
+                    await SavePacker.BuildAndPackSignaturesAsync(localSaveInfo.LocalPath, () => stream, cloudManifest,
                         localManifest, buildSignaturesProgress, (byteSize, _) =>
                         {
                             sendProgress?.ChangeByteCount(byteSize);
@@ -157,7 +160,7 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
                     if (cloudManifest is null)
                         throw new InvalidOperationException("Manifest was not received.");
                 
-                    await DirectoryPacker.ApplyDeltasAsync(localSaveInfo.LocalPath, stream, cloudManifest, localManifest, applyDeltasProgress, token);
+                    await SavePacker.ApplyDeltasAsync(localSaveInfo.LocalPath, stream, cloudManifest, localManifest, applyDeltasProgress, token);
                 }, buildManifestAggregateProgress?.CreateProgressItem(), sendProgress, buildDeltasProgress,
             byteCount => ByteProgressToNormalizedProgress.From(receiveDeltasProgress, byteCount), cancellationToken);
             await saveCatalogService.RefreshAsync(cancellationToken);
@@ -184,8 +187,8 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
         
             AggregateProgress? buildManifestAggregateProgress = AggregateProgress.From(buildManifestProgress, 2);
         
-            DirectoryManifest? cloudManifest = null;
-            DirectoryManifest localManifest = await DirectoryManifest.From(localSaveInfo.LocalPath, buildManifestAggregateProgress?.CreateProgressItem(), cancellationToken);
+            SaveManifest? cloudManifest = null;
+            SaveManifest localManifest = await SaveManifest.From(localSaveInfo.LocalPath, buildManifestAggregateProgress?.CreateProgressItem(), cancellationToken);
         
             await using MemoryStream deltas = new();
         
@@ -194,7 +197,7 @@ public class SaveSyncService(IServerSession serverSession, ISaveCatalogService s
                     if (cloudManifest is null)
                         throw new InvalidOperationException("Manifest was not received.");
                 
-                    await DirectoryPacker.CreateDeltasAsync(localSaveInfo.LocalPath, signatureStream, deltas, localManifest, cloudManifest, buildDeltasProgress, (byteCount, _) =>
+                    await SavePacker.CreateDeltasAsync(localSaveInfo.LocalPath, signatureStream, deltas, localManifest, cloudManifest, buildDeltasProgress, (byteCount, _) =>
                     {
                         sendProgress?.ChangeByteCount(byteCount);
                         return Task.CompletedTask;

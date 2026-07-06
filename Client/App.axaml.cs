@@ -108,7 +108,7 @@ public partial class App : Application
         services.AddSingleton<ISaveSyncService, SaveSyncService>();
         services.AddSingleton<ISelectSaveForUploadService, SelectSaveForUploadService>();
         services.AddSingleton<ISelectSaveForDownloadService, SelectSaveForDownloadService>();
-        services.AddSingleton<IFolderPickerService, FolderPickerService>();
+        services.AddSingleton<IFileSystemPickerService, FileSystemPickerService>();
         services.AddSingleton<ICreateUserService, CreateUserService>();
         services.AddSingleton<IModalService, ModalService>();
         services.AddSingleton<IOpenSettingsService, OpenSettingsService>();

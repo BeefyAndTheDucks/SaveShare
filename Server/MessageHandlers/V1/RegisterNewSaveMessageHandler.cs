@@ -22,6 +22,7 @@ public class RegisterNewSaveMessageHandler : MessageHandler<C2SRegisterNewSaveMe
         Result updateSaveResult = await SaveRegistry.UpdateSaveInfo(createSaveResult.Value, info =>
         {
             info.Name = message.Name;
+            info.SaveType = message.SaveType;
             return info;
         }, cancellationToken);
         if (!updateSaveResult.Succeeded)
