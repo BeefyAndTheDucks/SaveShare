@@ -13,7 +13,7 @@ public static class NativeAudio
         
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            System.Media.SystemSounds.Hand.Play();
+            System.Media.SystemSounds.Exclamation.Play();
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
