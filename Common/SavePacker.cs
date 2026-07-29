@@ -91,7 +91,8 @@ public static class SavePacker
     
     public static async Task PackAsync(string path, Func<Stream> output, bool ownsStream, Func<long, CancellationToken, Task>? gotPackedSize = null, CancellationToken ct = default)
     {
-        string tempFile = Path.GetTempFileName();
+        string pathParentDirectory = Path.GetDirectoryName(path) ?? throw new InvalidOperationException("Path must be valid.");
+        string tempFile = Path.Combine(pathParentDirectory, $".pack_{Guid.NewGuid()}");
         await using FileStream temporaryFileStream = new(tempFile, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
         try
         {
