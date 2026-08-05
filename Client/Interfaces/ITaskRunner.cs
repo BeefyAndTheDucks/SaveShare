@@ -6,5 +6,5 @@ namespace Client.Interfaces;
 
 public interface ITaskRunner
 {
-    Task RunAsync(Func<CancellationToken, Task> task, CancellationToken cancellationToken = default);
+    Task<bool> RunAsync(Func<CancellationToken, Task> task, CancellationToken cancellationToken = default);
 }

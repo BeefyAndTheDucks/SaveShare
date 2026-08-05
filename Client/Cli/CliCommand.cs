@@ -12,7 +12,7 @@ public class CliCommand : AsyncCommandBase
 
     private readonly REPLCommandBase[] _commands =
     [
-
+        new ListCommand()
     ];
     
     protected override async Task Invoke(ParseResult parseResult)
@@ -36,7 +36,8 @@ public class CliCommand : AsyncCommandBase
             Console.CancelKeyPress += (_, _) => _cts.Cancel();
             Console.CancelKeyPress += (_, _) => Console.WriteLine("\nGoodbye.");
 
-            await CliHelpers.Setup(_cts.Token);
+            if (!await CliHelpers.Setup(_cts.Token))
+                return;
         
             await REPL();
         }
@@ -71,7 +72,7 @@ public class CliCommand : AsyncCommandBase
                     Console.WriteLine("- exit: Exit the REPL.");
                     Console.WriteLine("- clear: Clears the screen.");
                     foreach (REPLCommandBase command in _commands)
-                        Console.WriteLine($"- {command.Command}: {command.Description}");
+                        LogHelpCommand(command.CreateCommand());
                     break;
                 case "clear":
                     Console.Clear();
@@ -84,6 +85,23 @@ public class CliCommand : AsyncCommandBase
         }
     }
 
+    private static void LogHelpCommand(Command command, int depth = 0)
+    {
+        string indent = new(' ', depth * 2);
+        Console.WriteLine($"{indent}- {command.Name}: {command.Description}");
+        foreach (Option option in command.Options)
+            if (!option.Hidden)
+                Console.WriteLine($"{indent}  - {option.Name}: {option.Description} ({string.Join(", ", option.Aliases)})");
+        
+        foreach (Argument argument in command.Arguments)
+            if (!argument.Hidden)
+                Console.WriteLine($"{indent}  - {argument.Name}: {argument.Description}");
+        
+        foreach (Command subcommand in command.Subcommands)
+            if (!subcommand.Hidden)
+                LogHelpCommand(subcommand, depth + 1);
+    }
+
     private async Task<bool> TryEvaluateReplCommand(string input)
     {
         string[] args = input.Split(' ');
@@ -91,7 +109,7 @@ public class CliCommand : AsyncCommandBase
         foreach (REPLCommandBase replCommand in _commands)
             if (command == replCommand.Command)
             {
-                await replCommand.Execute(args[..^1]);
+                await replCommand.Execute(args[1..]);
                 return true;
             }
 

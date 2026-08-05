@@ -7,19 +7,21 @@ namespace Client.Services;
 
 public sealed class TaskRunner(IErrorPresenter errorPresenter) : ITaskRunner
 {
-    public async Task RunAsync(Func<CancellationToken, Task> task, CancellationToken cancellationToken = default)
+    public async Task<bool> RunAsync(Func<CancellationToken, Task> task, CancellationToken cancellationToken = default)
     {
         try
         {
             await task(cancellationToken);
+            return true;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // User cancellation; usually no dialog.
+            return false;
         }
         catch (Exception ex)
         {
             await errorPresenter.ShowErrorAsync(ex, cancellationToken);
+            return false;
         }
     }
 }

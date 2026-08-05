@@ -55,7 +55,7 @@ public static class CliHelpers
         Services = services.BuildServiceProvider();
     }
     
-    public static async Task Setup(CancellationToken ct = default)
+    public static async Task<bool> Setup(CancellationToken ct = default)
     {
         SetupServices();
         
@@ -68,16 +68,18 @@ public static class CliHelpers
 
             ITaskRunner taskRunner = Services.GetRequiredService<ITaskRunner>();
 
-            await taskRunner.RunAsync(startupService.StartAsync, ct);
-        
-            Console.WriteLine("Done!");
+            if (await taskRunner.RunAsync(startupService.StartAsync, ct))
+            {
+                Console.WriteLine("Done!");
+                return true;
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine("Failed!");
             await Console.Error.WriteLineAsync(ex.ToString());
-
-            throw;
         }
+
+        return false;
     }
 }
