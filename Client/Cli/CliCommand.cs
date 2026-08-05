@@ -2,12 +2,18 @@ using System;
 using System.CommandLine;
 using System.Threading;
 using System.Threading.Tasks;
+using Client.Commands.REPL;
 
 namespace Client.Commands;
 
 public class CliCommand : AsyncCommandBase
 {
     private readonly CancellationTokenSource _cts = new();
+
+    private readonly REPLCommandBase[] _commands =
+    [
+
+    ];
     
     protected override async Task Invoke(ParseResult parseResult)
     {
@@ -32,7 +38,7 @@ public class CliCommand : AsyncCommandBase
 
             await CliHelpers.Setup(_cts.Token);
         
-            REPL();
+            await REPL();
         }
         catch (Exception e)
         {
@@ -40,19 +46,19 @@ public class CliCommand : AsyncCommandBase
         }
     }
 
-    private void REPL()
+    private async Task REPL()
     {
         while (true)
         {
             Console.WriteLine();
             Console.Write("> ");
-            string? input = Console.ReadLine();
+            string? input = Console.ReadLine()?.Trim();
             if (string.IsNullOrWhiteSpace(input))
                 continue;
             if (input == "exit")
             {
                 Console.WriteLine("Shutting down...");
-                _cts.Cancel();
+                await _cts.CancelAsync();
                 Console.WriteLine("Goodbye.");
                 break;
             }
@@ -64,15 +70,32 @@ public class CliCommand : AsyncCommandBase
                     Console.WriteLine("- help: Shows this message.");
                     Console.WriteLine("- exit: Exit the REPL.");
                     Console.WriteLine("- clear: Clears the screen.");
+                    foreach (REPLCommandBase command in _commands)
+                        Console.WriteLine($"- {command.Command}: {command.Description}");
                     break;
                 case "clear":
                     Console.Clear();
                     break;
                 default:
-                    Console.WriteLine("Unknown command.");
+                    if (!await TryEvaluateReplCommand(input))
+                        Console.WriteLine("Unknown command.");
                     break;
             }
         }
+    }
+
+    private async Task<bool> TryEvaluateReplCommand(string input)
+    {
+        string[] args = input.Split(' ');
+        string command = args[0];
+        foreach (REPLCommandBase replCommand in _commands)
+            if (command == replCommand.Command)
+            {
+                await replCommand.Execute(args[..^1]);
+                return true;
+            }
+
+        return false;
     }
 
     protected override Command GetCommand()
