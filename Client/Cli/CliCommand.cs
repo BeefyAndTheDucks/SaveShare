@@ -12,7 +12,7 @@ public class CliCommand : AsyncCommandBase
 
     private readonly REPLCommandBase[] _commands =
     [
-        new ListCommand()
+        new ListCommand(), new RefreshCommand()
     ];
     
     protected override async Task Invoke(ParseResult parseResult)
